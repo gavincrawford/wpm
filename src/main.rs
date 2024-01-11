@@ -20,26 +20,42 @@ fn main() -> Result<(), std::io::Error> {
 
     // basic terminal renderer
     let mut stdout = stdout();
+    let mut pos = 0;
     enable_raw_mode().expect("failed to enable raw mode");
     clear(&mut stdout);
     loop {
         // render
         clear(&mut stdout);
-        for word in phrase.split_whitespace() {
-            queue!(stdout, Print(word.black().on_grey()), Print(" "))?;
+        for (i, c) in phrase.chars().enumerate() {
+            let style;
+            if c == ' ' {
+                style = c.reset();
+            } else if i < pos {
+                style = c.black().on_green();
+            } else {
+                style = c.black().on_grey();
+            }
+            queue!(stdout, Print(style))?;
         }
-        queue!(stdout, MoveTo(0, 0))?;
+        queue!(stdout, MoveTo(pos as u16, 0))?;
         stdout.flush()?;
 
         // handle events
         use Event::*;
         use KeyCode::*;
-        if !poll(Duration::from_secs(1))? {
+        if !poll(Duration::from_millis(200))? {
             continue;
         }
         match read()? {
             Key(key) => match key.code {
                 Esc => break,
+                Backspace => pos -= 1,
+                Char(char) => {
+                    let next = phrase.chars().nth(pos);
+                    if char == next.unwrap_or('~') {
+                        pos += 1;
+                    }
+                }
                 _ => {}
             },
             _ => {}
