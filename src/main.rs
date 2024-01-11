@@ -40,6 +40,11 @@ fn main() -> Result<(), std::io::Error> {
         queue!(stdout, MoveTo(pos as u16, 0))?;
         stdout.flush()?;
 
+        // end condition
+        if pos == phrase.len() {
+            break;
+        }
+
         // handle events
         use Event::*;
         use KeyCode::*;
