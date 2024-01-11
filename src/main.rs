@@ -28,10 +28,10 @@ fn main() -> Result<(), std::io::Error> {
         clear(&mut stdout);
         for (i, c) in phrase.chars().enumerate() {
             let style;
-            if c == ' ' {
-                style = c.reset();
-            } else if i < pos {
-                style = c.black().on_green();
+            if i < pos {
+                style = c.black().on_green().italic()
+            } else if c == ' ' {
+                style = '_'.dark_grey().on_grey()
             } else {
                 style = c.black().on_grey();
             }
