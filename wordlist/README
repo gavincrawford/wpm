@@ -1,0 +1,4 @@
+All wordlists are sourced from [Monkeytype](https://github.com/monkeytypegame/monkeytype/tree/master/frontend/static/languages).
+Wordlists have been converted, stripped of metadata, and adapted for use in this program.
+Big thanks to Monkeytype for making their code available to the public!
+

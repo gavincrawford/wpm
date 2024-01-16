@@ -239,7 +239,6 @@ draw
 left
 late
 run
-don't
 while
 press
 close
@@ -594,7 +593,7 @@ finish
 happy
 hope
 flower
-clothe
+clothes
 strange
 gone
 jump
@@ -789,7 +788,6 @@ provide
 agree
 thus
 capital
-won't
 chair
 danger
 fruit
@@ -972,7 +970,6 @@ proper
 bar
 offer
 segment
-slave
 duck
 instant
 market
@@ -998,3 +995,5 @@ quotient
 teeth
 shell
 neck
+program
+public
