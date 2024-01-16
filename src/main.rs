@@ -22,20 +22,30 @@ fn main() -> Result<(), std::io::Error> {
     // basic terminal renderer
     let mut stdout = stdout();
     let mut pos = 0;
+    let mut miss = false;
     enable_raw_mode().expect("failed to enable raw mode");
     clear(&mut stdout);
     loop {
         // render
         clear(&mut stdout);
         for (i, c) in phrase.chars().enumerate() {
-            let style;
+            // style regular characters
+            let mut style;
             if i < pos {
-                style = c.black().on_green().italic()
+                style = c.black().on_green().italic();
             } else if c == ' ' {
-                style = '_'.dark_grey().on_grey()
+                style = '_'.dark_grey().on_grey();
             } else {
                 style = c.black().on_grey();
             }
+
+            // style on miss
+            if i == pos && miss == true {
+                style = style.on_red();
+                miss = false;
+            }
+
+            // print out styled content
             queue!(stdout, Print(style))?;
         }
         queue!(stdout, MoveTo(pos as u16, 0))?;
@@ -60,6 +70,8 @@ fn main() -> Result<(), std::io::Error> {
                     let next = phrase.chars().nth(pos);
                     if char == next.unwrap_or('~') {
                         pos += 1;
+                    } else {
+                        miss = true;
                     }
                 }
                 _ => {}
