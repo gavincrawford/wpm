@@ -5,7 +5,7 @@ use std::{
 
 use clap::{arg, Command};
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event, KeyCode},
     execute, queue,
     style::{Print, Stylize},
@@ -44,8 +44,8 @@ fn main() -> Result<(), std::io::Error> {
     clear(&mut stdout);
     loop {
         // render
-        clear(&mut stdout);
         let size = size().expect("Failed to read screen size.");
+        queue!(stdout, MoveTo(0, 0), Hide)?;
         for (i, c) in phrase.chars().enumerate() {
             // style regular characters
             let mut style;
@@ -68,6 +68,7 @@ fn main() -> Result<(), std::io::Error> {
         }
         queue!(
             stdout,
+            Show,
             MoveTo(
                 (pos % size.0 as usize) as u16,
                 (pos / size.0 as usize) as u16
