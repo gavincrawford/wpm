@@ -9,7 +9,7 @@ use crossterm::{
     event::{poll, read, Event, KeyCode},
     execute, queue,
     style::{Print, Stylize},
-    terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
+    terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
 };
 use tokens::{str_to_tokens, tokens_to_phrase, ENG_10K, ENG_1K};
 
@@ -38,13 +38,14 @@ fn main() -> Result<(), std::io::Error> {
 
     // basic terminal renderer
     let mut stdout = stdout();
-    let mut pos = 0;
-    let mut miss = false;
+    let mut pos: usize = 0;
+    let mut miss: bool = false;
     enable_raw_mode().expect("failed to enable raw mode");
     clear(&mut stdout);
     loop {
         // render
         clear(&mut stdout);
+        let size = size().expect("Failed to read screen size.");
         for (i, c) in phrase.chars().enumerate() {
             // style regular characters
             let mut style;
@@ -65,7 +66,13 @@ fn main() -> Result<(), std::io::Error> {
             // print out styled content
             queue!(stdout, Print(style))?;
         }
-        queue!(stdout, MoveTo(pos as u16, 0))?;
+        queue!(
+            stdout,
+            MoveTo(
+                (pos % size.0 as usize) as u16,
+                (pos / size.0 as usize) as u16
+            )
+        )?;
         stdout.flush()?;
 
         // end condition
