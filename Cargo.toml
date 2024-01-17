@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = "4.4"
 crossterm = "0.27"
 rand = "0.8"
