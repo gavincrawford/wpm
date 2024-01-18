@@ -5,7 +5,7 @@ use std::{
 
 use clap::{arg, Command};
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
+    cursor::MoveTo,
     event::{poll, read, Event, KeyCode},
     execute, queue,
     style::{Print, Stylize},
@@ -36,50 +36,48 @@ fn main() -> Result<(), std::io::Error> {
     let tokens: Vec<&str> = str_to_tokens(wordlist);
     let phrase = tokens_to_phrase(10, &tokens);
 
-    // basic terminal renderer
-    let mut stdout = stdout();
-    let mut pos: usize = 0;
-    let mut n_miss: usize = 0;
-    let mut miss: bool = false;
-    let timer = Instant::now();
+    // set up variables for the renderer
+    let mut stdout = stdout(); // stdout handle
+    let mut n_miss: usize = 0; // miss counter (error count)
+    let mut miss: bool = false; // miss render flag
+    let mut n_hit: usize = 0; // hit counter (cursor pos)
+    let mut hit: bool = false; // hit render flag
+    let timer = Instant::now(); // timer for WPM calculation
     enable_raw_mode().expect("failed to enable raw mode");
     clear(&mut stdout);
+
+    // render base text
+    queue!(stdout, MoveTo(0, 0))?;
+    for c in phrase.chars() {
+        if c == ' ' {
+            queue!(stdout, Print('_'.dark_grey().on_grey()))?;
+        } else {
+            queue!(stdout, Print(c.black().on_grey()))?;
+        }
+    }
     loop {
         // render
         let size = size().expect("Failed to read screen size.");
-        queue!(stdout, MoveTo(0, 0), Hide)?;
-        for (i, c) in phrase.chars().enumerate() {
-            // style regular characters
-            let mut style;
-            if i < pos {
-                style = c.black().on_green().italic();
-            } else if c == ' ' {
-                style = '_'.dark_grey().on_grey();
-            } else {
-                style = c.black().on_grey();
-            }
-
-            // style on miss
-            if i == pos && miss == true {
-                style = style.on_red();
-                miss = false;
-            }
-
-            // print out styled content
-            queue!(stdout, Print(style))?;
+        if hit {
+            queue!(
+                stdout,
+                move_to_wrap(n_hit - 1, size),
+                Print((phrase.as_bytes()[n_hit - 1] as char).black().on_green())
+            )?;
+            hit = false;
+        } else if miss {
+            queue!(
+                stdout,
+                move_to_wrap(n_hit, size),
+                Print((phrase.as_bytes()[n_hit] as char).on_red())
+            )?;
+            miss = false;
         }
-        queue!(
-            stdout,
-            Show,
-            MoveTo(
-                (pos % size.0 as usize) as u16,
-                (pos / size.0 as usize) as u16
-            )
-        )?;
+        queue!(stdout, move_to_wrap(n_hit, size))?;
         stdout.flush()?;
 
         // end condition
-        if pos == phrase.len() {
+        if n_hit == phrase.len() {
             break;
         }
 
@@ -92,11 +90,12 @@ fn main() -> Result<(), std::io::Error> {
         match read()? {
             Key(key) => match key.code {
                 Esc => break,
-                Backspace => pos -= 1,
+                Backspace => n_hit -= 1,
                 Char(char) => {
-                    let next = phrase.chars().nth(pos);
+                    let next = phrase.chars().nth(n_hit);
                     if char == next.unwrap_or('~') {
-                        pos += 1;
+                        n_hit += 1;
+                        hit = true;
                     } else {
                         n_miss += 1;
                         miss = true;
@@ -130,6 +129,14 @@ fn clear(io: &mut Stdout) {
         Clear(ClearType::Purge)
     )
     .expect("failed to clear screen")
+}
+
+/// Move to position by char, with wrap in respect to `size`.
+fn move_to_wrap(pos: usize, size: (u16, u16)) -> MoveTo {
+    MoveTo(
+        (pos % size.0 as usize) as u16,
+        (pos / size.0 as usize) as u16,
+    )
 }
 
 /// Calculate raw WPM from typed characters and time.
