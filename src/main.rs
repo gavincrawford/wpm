@@ -55,6 +55,8 @@ fn main() -> Result<(), std::io::Error> {
             queue!(stdout, Print(c.black().on_grey()))?;
         }
     }
+
+    // play loop
     loop {
         // render
         let size = size().expect("Failed to read screen size.");
