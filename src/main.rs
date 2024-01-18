@@ -1,6 +1,6 @@
 use std::{
     io::{stdout, Stdout, Write},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use clap::{arg, Command};
@@ -34,12 +34,14 @@ fn main() -> Result<(), std::io::Error> {
 
     // get phrase from wordlist
     let tokens: Vec<&str> = str_to_tokens(wordlist);
-    let phrase = tokens_to_phrase(25, &tokens);
+    let phrase = tokens_to_phrase(10, &tokens);
 
     // basic terminal renderer
     let mut stdout = stdout();
     let mut pos: usize = 0;
+    let mut n_miss: usize = 0;
     let mut miss: bool = false;
+    let timer = Instant::now();
     enable_raw_mode().expect("failed to enable raw mode");
     clear(&mut stdout);
     loop {
@@ -96,6 +98,7 @@ fn main() -> Result<(), std::io::Error> {
                     if char == next.unwrap_or('~') {
                         pos += 1;
                     } else {
+                        n_miss += 1;
                         miss = true;
                     }
                 }
@@ -106,6 +109,13 @@ fn main() -> Result<(), std::io::Error> {
     }
     disable_raw_mode().expect("failed to disable raw mode");
     clear(&mut stdout);
+
+    // give user wpm
+    println!(
+        "GROSS: {:.2}wpm\nNET:   {:.2}wpm",
+        wpm_gross(phrase.len(), timer.elapsed()),
+        wpm_net(phrase.len(), n_miss, timer.elapsed())
+    );
 
     // done
     Ok(())
@@ -120,4 +130,14 @@ fn clear(io: &mut Stdout) {
         Clear(ClearType::Purge)
     )
     .expect("failed to clear screen")
+}
+
+/// Calculate raw WPM from typed characters and time.
+fn wpm_gross(k: usize, dur: Duration) -> f32 {
+    (k as f32 / 5.) / (dur.as_secs() as f32 / 60.)
+}
+
+/// Calculate net WPM from typed characters and time, with consideration for errors.
+fn wpm_net(k: usize, e: usize, dur: Duration) -> f32 {
+    wpm_gross(k, dur) - (e as f32 / (dur.as_secs() as f32 / 60.))
 }
