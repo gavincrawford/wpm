@@ -89,7 +89,16 @@ impl TypeRenderer {
                 // remove event
                 false
             });
-            queue!(stdout, move_to_wrap(self.hits, size))?;
+            queue!(
+                stdout,
+                MoveTo(0, size.1 - 1),
+                Print(format!(
+                    "TIME {: >2}s WPM {: >3.2}",
+                    timer.elapsed().as_secs(),
+                    wpm_gross(self.hits, timer.elapsed())
+                )),
+                move_to_wrap(self.hits, size)
+            )?;
             stdout.flush()?;
 
             // end condition
@@ -100,7 +109,7 @@ impl TypeRenderer {
             // handle events
             use Event::*;
             use KeyCode::*;
-            if !poll(Duration::from_secs(1))? {
+            if !poll(Duration::from_millis(100))? {
                 continue;
             } else {
                 match read()? {
