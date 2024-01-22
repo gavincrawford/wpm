@@ -18,6 +18,10 @@ pub struct TypeRenderer {
     phrase: String,
     /// Tracks events.
     events: Vec<TypeEvent>,
+    /// Tracks miss count. (Error count)
+    misses: usize,
+    /// Tracks hit count. (Cursor position)
+    hits: usize,
 }
 
 /// Represents all types of events that could occur during a type test.
@@ -31,14 +35,14 @@ impl TypeRenderer {
         Self {
             phrase,
             events: vec![],
+            misses: 0,
+            hits: 0,
         }
     }
 
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // set up variables for the renderer
         let mut stdout = stdout(); // stdout handle
-        let mut n_miss: usize = 0; // miss counter (error count)
-        let mut n_hit: usize = 0; // hit counter (cursor pos)
         let timer = Instant::now(); // timer for WPM calculation
         enable_raw_mode().expect("failed to enable raw mode");
         clear(&mut stdout);
@@ -63,17 +67,17 @@ impl TypeRenderer {
                     Miss => {
                         queue!(
                             stdout,
-                            move_to_wrap(n_hit, size),
-                            Print((self.phrase.as_bytes()[n_hit] as char).on_red())
+                            move_to_wrap(self.hits, size),
+                            Print((self.phrase.as_bytes()[self.hits] as char).on_red())
                         )
                         .unwrap();
                     }
                     Hit => {
                         queue!(
                             stdout,
-                            move_to_wrap(n_hit - 1, size),
+                            move_to_wrap(self.hits - 1, size),
                             Print(
-                                (self.phrase.as_bytes()[n_hit - 1] as char)
+                                (self.phrase.as_bytes()[self.hits - 1] as char)
                                     .black()
                                     .on_green()
                             )
@@ -85,11 +89,11 @@ impl TypeRenderer {
                 // remove event
                 false
             });
-            queue!(stdout, move_to_wrap(n_hit, size))?;
+            queue!(stdout, move_to_wrap(self.hits, size))?;
             stdout.flush()?;
 
             // end condition
-            if n_hit == self.phrase.len() {
+            if self.hits == self.phrase.len() {
                 break;
             }
 
@@ -102,14 +106,14 @@ impl TypeRenderer {
                 match read()? {
                     Key(key) => match key.code {
                         Esc => break,
-                        Backspace => n_hit -= 1,
+                        Backspace => self.hits -= 1,
                         Char(char) => {
-                            let next = self.phrase.chars().nth(n_hit);
+                            let next = self.phrase.chars().nth(self.hits);
                             if char == next.unwrap_or('~') {
-                                n_hit += 1;
+                                self.hits += 1;
                                 self.events.push(TypeEvent::Hit);
                             } else {
-                                n_miss += 1;
+                                self.misses += 1;
                                 self.events.push(TypeEvent::Miss);
                             }
                         }
@@ -126,7 +130,7 @@ impl TypeRenderer {
         println!(
             "GROSS: {:.2}wpm\nNET:   {:.2}wpm",
             wpm_gross(self.phrase.len(), timer.elapsed()),
-            wpm_net(self.phrase.len(), n_miss, timer.elapsed())
+            wpm_net(self.phrase.len(), self.misses, timer.elapsed())
         );
 
         // done
