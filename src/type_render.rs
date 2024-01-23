@@ -5,7 +5,7 @@ use std::{
 
 use crossterm::{
     cursor::MoveTo,
-    event::{poll, read, Event, KeyCode},
+    event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
@@ -107,26 +107,15 @@ impl TypeRenderer {
             }
 
             // handle events
-            use Event::*;
-            use KeyCode::*;
             if !poll(Duration::from_millis(100))? {
                 continue;
             } else {
+                use Event::*;
+                use KeyCode::*;
                 match read()? {
                     Key(key) => match key.code {
                         Esc => break,
-                        Backspace => self.hits -= 1,
-                        Char(char) => {
-                            let next = self.phrase.chars().nth(self.hits);
-                            if char == next.unwrap_or('~') {
-                                self.hits += 1;
-                                self.events.push(TypeEvent::Hit);
-                            } else {
-                                self.misses += 1;
-                                self.events.push(TypeEvent::Miss);
-                            }
-                        }
-                        _ => {}
+                        _ => self.handle_key(key),
                     },
                     _ => {}
                 }
@@ -144,6 +133,24 @@ impl TypeRenderer {
 
         // done
         Ok(())
+    }
+
+    fn handle_key(&mut self, key: KeyEvent) {
+        use KeyCode::*;
+        match key.code {
+            Backspace => self.hits -= 1,
+            Char(char) => {
+                let next = self.phrase.chars().nth(self.hits);
+                if char == next.unwrap_or('~') {
+                    self.hits += 1;
+                    self.events.push(TypeEvent::Hit);
+                } else {
+                    self.misses += 1;
+                    self.events.push(TypeEvent::Miss);
+                }
+            }
+            _ => {}
+        }
     }
 }
 
