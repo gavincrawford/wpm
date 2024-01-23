@@ -4,7 +4,7 @@ use std::{
 };
 
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
@@ -16,27 +16,28 @@ use crossterm::{
 pub struct TypeRenderer {
     /// Phrase the user will be tested on.
     phrase: String,
-    /// Tracks events.
-    events: Vec<TypeEvent>,
-    /// Tracks miss count. (Error count)
-    misses: usize,
-    /// Tracks hit count. (Cursor position)
-    hits: usize,
+    /// Letters, generated from the phrase.
+    letters: Vec<Box<Letter>>,
+    /// Cursor position.
+    cursor: usize,
 }
 
-/// Represents all types of events that could occur during a type test.
-enum TypeEvent {
-    Miss,
-    Hit,
+enum Letter {
+    Char(char),
+    Hit(char),
+    Miss(char),
 }
 
 impl TypeRenderer {
     pub fn new(phrase: String) -> Self {
         Self {
-            phrase,
-            events: vec![],
-            misses: 0,
-            hits: 0,
+            phrase: phrase.clone(),
+            letters: phrase
+                .as_bytes()
+                .iter()
+                .map(|c| Box::from(Letter::Char(*c as char)))
+                .collect::<Vec<Box<Letter>>>(),
+            cursor: 0,
         }
     }
 
@@ -47,62 +48,23 @@ impl TypeRenderer {
         enable_raw_mode().expect("failed to enable raw mode");
         clear(&mut stdout);
 
-        // render base text
-        queue!(stdout, MoveTo(0, 0))?;
-        for c in self.phrase.chars() {
-            if c == ' ' {
-                queue!(stdout, Print('_'.dark_grey().on_grey()))?;
-            } else {
-                queue!(stdout, Print(c.black().on_grey()))?;
-            }
-        }
-
         // play loop
         loop {
             // render
-            let size = size().expect("Failed to read screen size.");
-            self.events.retain(|event| {
-                use TypeEvent::*;
-                match event {
-                    Miss => {
-                        queue!(
-                            stdout,
-                            move_to_wrap(self.hits, size),
-                            Print((self.phrase.as_bytes()[self.hits] as char).on_red())
-                        )
-                        .unwrap();
-                    }
-                    Hit => {
-                        queue!(
-                            stdout,
-                            move_to_wrap(self.hits - 1, size),
-                            Print(
-                                (self.phrase.as_bytes()[self.hits - 1] as char)
-                                    .black()
-                                    .on_green()
-                            )
-                        )
-                        .unwrap();
-                    }
+            queue!(stdout, MoveTo(0, 0), Hide)?;
+            for letter in &self.letters {
+                use Letter::*;
+                match **letter {
+                    Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
+                    Hit(c) => queue!(stdout, Print(c.black().on_green().italic()))?,
+                    Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
                 }
-
-                // remove event
-                false
-            });
-            queue!(
-                stdout,
-                MoveTo(0, size.1 - 1),
-                Print(format!(
-                    "TIME {: >2}s WPM {: >3.2}",
-                    timer.elapsed().as_secs(),
-                    wpm_gross(self.hits, timer.elapsed())
-                )),
-                move_to_wrap(self.hits, size)
-            )?;
+            }
+            queue!(stdout, move_to_wrap(self.cursor, size()?), Show,)?;
             stdout.flush()?;
 
             // end condition
-            if self.hits == self.phrase.len() {
+            if self.cursor == self.letters.len() {
                 break;
             }
 
@@ -121,14 +83,17 @@ impl TypeRenderer {
                 }
             }
         }
+
+        // close out rendering
+        execute!(stdout, Show)?;
         disable_raw_mode().expect("failed to disable raw mode");
         clear(&mut stdout);
 
         // give user wpm
         println!(
             "GROSS: {:.2}wpm\nNET:   {:.2}wpm",
-            wpm_gross(self.phrase.len(), timer.elapsed()),
-            wpm_net(self.phrase.len(), self.misses, timer.elapsed())
+            wpm_gross(self.letters.len(), timer.elapsed()),
+            wpm_net(self.phrase.len(), 0, timer.elapsed()) // TODO fix wpm
         );
 
         // done
@@ -138,15 +103,28 @@ impl TypeRenderer {
     fn handle_key(&mut self, key: KeyEvent) {
         use KeyCode::*;
         match key.code {
-            Backspace => self.hits -= 1,
-            Char(char) => {
-                let next = self.phrase.chars().nth(self.hits);
-                if char == next.unwrap_or('~') {
-                    self.hits += 1;
-                    self.events.push(TypeEvent::Hit);
-                } else {
-                    self.misses += 1;
-                    self.events.push(TypeEvent::Miss);
+            Backspace => {
+                // prevent us from deleting into nowhere
+                if self.cursor <= 0 {
+                    return;
+                }
+                self.cursor -= 1;
+                let cursor_letter = self.letters.get_mut(self.cursor).unwrap();
+                **cursor_letter = Letter::Char(match **cursor_letter {
+                    Letter::Char(c) => c,
+                    Letter::Hit(c) => c,
+                    Letter::Miss(c) => c,
+                });
+            }
+            Char(c) => {
+                let cursor_letter = self.letters.get_mut(self.cursor).unwrap();
+                if let Letter::Char(cursor_char) = **cursor_letter {
+                    self.cursor += 1;
+                    if c != cursor_char {
+                        **cursor_letter = Letter::Miss(cursor_char);
+                    } else {
+                        **cursor_letter = Letter::Hit(cursor_char);
+                    }
                 }
             }
             _ => {}
