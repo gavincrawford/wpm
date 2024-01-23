@@ -91,9 +91,10 @@ impl TypeRenderer {
 
         // give user wpm
         println!(
-            "GROSS: {:.2}wpm\nNET:   {:.2}wpm",
-            wpm_gross(self.letters.len(), timer.elapsed()),
-            wpm_net(self.phrase.len(), 0, timer.elapsed()) // TODO fix wpm
+            "GROSS: {:.2}wpm\nNET:   {:.2}wpm ({}X)",
+            wpm_gross(self.phrase.len(), timer.elapsed()),
+            wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
+            self.count_misses(),
         );
 
         // done
@@ -129,6 +130,16 @@ impl TypeRenderer {
             }
             _ => {}
         }
+    }
+
+    fn count_misses(&self) -> usize {
+        let mut misses = 0;
+        for l in &self.letters {
+            if let Letter::Miss(_) = **l {
+                misses += 1;
+            }
+        }
+        misses
     }
 }
 
