@@ -22,6 +22,9 @@ pub struct TypeRenderer {
     cursor: usize,
 }
 
+/// Represents a single letter within the phrase. Each letter is either a `Char`, which is an
+/// untyped character, a `Hit`, which is a correct character, and a `Miss`, which is an incorrect
+/// character.
 enum Letter {
     Char(char),
     Hit(char),
@@ -41,6 +44,8 @@ impl TypeRenderer {
         }
     }
 
+    /// Starts and runs type until completed. Uses key handlers and other supporting functions to
+    /// work as intended.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // set up variables for the renderer
         let mut stdout = stdout(); // stdout handle
@@ -101,6 +106,7 @@ impl TypeRenderer {
         Ok(())
     }
 
+    /// Handles a keypress.
     fn handle_key(&mut self, key: KeyEvent) {
         use KeyCode::*;
         match key.code {
@@ -132,6 +138,7 @@ impl TypeRenderer {
         }
     }
 
+    /// Counts the number of instances of the `Letter::Miss`.
     fn count_misses(&self) -> usize {
         let mut misses = 0;
         for l in &self.letters {
