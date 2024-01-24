@@ -8,6 +8,7 @@ fn main() -> Result<(), std::io::Error> {
     // get args
     let args = Command::new("WPM")
         .arg(arg!(<difficulty> "test difficulty (easy/hard)"))
+        .arg(arg!([length] "test length in words, defaults to 10 if not specified"))
         .get_matches();
     let wordlist = match args
         .get_one::<String>("difficulty")
@@ -20,10 +21,15 @@ fn main() -> Result<(), std::io::Error> {
         // something went wrong
         _ => std::process::exit(1),
     };
+    let length = args
+        .get_one::<String>("length")
+        .unwrap_or(&String::from("10"))
+        .parse::<usize>()
+        .expect("length is not a number.");
 
     // get phrase from wordlist
     let tokens: Vec<&str> = str_to_tokens(wordlist);
-    let phrase = tokens_to_phrase(10, &tokens);
+    let phrase = tokens_to_phrase(length, &tokens);
 
     // render type
     type_render::TypeRenderer::new(phrase).render()
