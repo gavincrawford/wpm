@@ -4,7 +4,7 @@ use std::{
 };
 
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
+    cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
@@ -48,6 +48,8 @@ impl TypeRenderer {
     /// work as intended.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // set up variables for the renderer
+        let screen_size = size()?; // does NOT live update
+        let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
         let mut stdout = stdout(); // stdout handle
         let timer = Instant::now(); // timer for WPM calculation
         enable_raw_mode().expect("failed to enable raw mode");
@@ -56,7 +58,9 @@ impl TypeRenderer {
         // play loop
         loop {
             // render
-            queue!(stdout, MoveTo(0, 0), Hide)?;
+            queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;
+            let mut letters_on_line = 0;
+            let mut lines_on_screen = 0;
             for letter in &self.letters {
                 use Letter::*;
                 match **letter {
@@ -64,8 +68,25 @@ impl TypeRenderer {
                     Hit(c) => queue!(stdout, Print(c.black().on_green().italic()))?,
                     Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
                 }
+                // TODO enforce screen_limits.1.1
+                letters_on_line += 1;
+                if letters_on_line >= screen_limits.1 .0 {
+                    lines_on_screen += 1;
+                    letters_on_line = 0;
+                    queue!(
+                        stdout,
+                        MoveTo(screen_limits.0 .0, screen_limits.0 .1 + lines_on_screen)
+                    )?;
+                }
             }
-            queue!(stdout, move_to_wrap(self.cursor, size()?), Show,)?;
+
+            queue!(
+                stdout,
+                move_to_wrap(self.cursor, screen_limits.1),
+                MoveRight(screen_limits.0 .0), // TODO doesn't work on zero values
+                MoveDown(screen_limits.0 .1),  // TODO doesn't work on zero values
+                Show,
+            )?;
             stdout.flush()?;
 
             // end condition
