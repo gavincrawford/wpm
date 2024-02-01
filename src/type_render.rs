@@ -7,7 +7,7 @@ use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
-    style::{Print, Stylize},
+    style::{Color, Print, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
 };
 
@@ -61,13 +61,18 @@ impl TypeRenderer {
             queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;
             let mut letters_on_line = 0;
             let mut lines_on_screen = 0;
-            for letter in &self.letters {
+            for (idx, letter) in self.letters.iter().enumerate() {
                 use Letter::*;
                 match **letter {
                     Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
-                    Hit(c) => queue!(stdout, Print(c.black().on_green().italic()))?,
+                    Hit(c) => {
+                        let char_age = self.cursor as i32 - idx as i32;
+                        let color = color_lerp((0, 255, 0), (180, 230, 0), char_age as f32 / 50.);
+                        queue!(stdout, Print(c.black().on(color).italic()))?
+                    }
                     Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
                 }
+
                 // TODO enforce screen_limits.1.1
                 letters_on_line += 1;
                 if letters_on_line >= screen_limits.1 .0 {
@@ -168,6 +173,18 @@ impl TypeRenderer {
             }
         }
         misses
+    }
+}
+
+/// Color linear interpolation, returns a Crossterm struct.
+fn color_lerp(a: (u8, u8, u8), b: (u8, u8, u8), t: f32) -> Color {
+    let a = (a.0 as f32, a.1 as f32, a.2 as f32);
+    let b = (b.0 as f32, b.1 as f32, b.2 as f32);
+    let t = t.clamp(0., 1.);
+    Color::Rgb {
+        r: (a.0 + (b.0 - a.0) * t) as u8,
+        g: (a.1 + (b.1 - a.1) * t) as u8,
+        b: (a.2 + (b.2 - a.2) * t) as u8,
     }
 }
 
