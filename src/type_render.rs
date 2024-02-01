@@ -80,13 +80,13 @@ impl TypeRenderer {
                 }
             }
 
-            queue!(
-                stdout,
-                move_to_wrap(self.cursor, screen_limits.1),
-                MoveRight(screen_limits.0 .0), // TODO doesn't work on zero values
-                MoveDown(screen_limits.0 .1),  // TODO doesn't work on zero values
-                Show,
-            )?;
+            queue!(stdout, move_to_wrap(self.cursor, screen_limits.1), Show)?;
+            if screen_limits.0 .0 > 0 {
+                queue!(stdout, MoveRight(screen_limits.0 .0))?;
+            }
+            if screen_limits.0 .1 > 0 {
+                queue!(stdout, MoveDown(screen_limits.0 .1))?;
+            }
             stdout.flush()?;
 
             // end condition
