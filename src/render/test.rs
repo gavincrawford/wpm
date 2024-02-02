@@ -11,9 +11,8 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, size, Clear, ClearType},
 };
 
-/// Renders a type with a given phrase. A type refers to one 'test' of typing ability on the given
-/// phrase, timing the response and evaluating the demonstrated WPM.
-pub struct TypeRenderer {
+/// Renders a typing test with the given phrase.
+pub struct TestRenderer {
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters, generated from the phrase.
@@ -31,7 +30,7 @@ enum Letter {
     Miss(char),
 }
 
-impl TypeRenderer {
+impl TestRenderer {
     pub fn new(phrase: String) -> Self {
         Self {
             phrase: phrase.clone(),
@@ -44,7 +43,7 @@ impl TypeRenderer {
         }
     }
 
-    /// Starts and runs type until completed. Uses key handlers and other supporting functions to
+    /// Starts and runs the test until completed. Uses key handlers and other supporting functions to
     /// work as intended.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // set up variables for the renderer

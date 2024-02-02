@@ -1,8 +1,28 @@
 use clap::{arg, Command};
-use tokens::{str_to_tokens, tokens_to_phrase, ENG_10K, ENG_1K};
+use rand::seq::SliceRandom;
 
-mod tokens;
-mod type_render;
+mod render;
+
+/// English 1k most used
+pub const ENG_1K: &str = include_str!("../wordlist/eng_1k.txt");
+/// English 10k most used
+pub const ENG_10K: &str = include_str!("../wordlist/eng_10k.txt");
+
+/// Split a string into a vector of its lines.
+pub fn str_to_tokens(src: &str) -> Vec<&str> {
+    src.lines().collect::<Vec<&str>>()
+}
+
+/// Select `n` number of tokens to create a random phrase.
+pub fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
+    let mut rng = rand::thread_rng();
+    let mut str = String::new();
+    for _ in 0..n {
+        str += tokens.choose(&mut rng).unwrap();
+        str += " ";
+    }
+    str.trim().to_string()
+}
 
 fn main() -> Result<(), std::io::Error> {
     // get args
@@ -31,6 +51,6 @@ fn main() -> Result<(), std::io::Error> {
     let tokens: Vec<&str> = str_to_tokens(wordlist);
     let phrase = tokens_to_phrase(length, &tokens);
 
-    // render type
-    type_render::TypeRenderer::new(phrase).render()
+    // render test
+    render::test::TestRenderer::new(phrase).render()
 }
