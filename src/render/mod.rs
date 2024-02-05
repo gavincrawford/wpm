@@ -14,6 +14,7 @@ mod util {
         style::Color,
         terminal::{Clear, ClearType},
     };
+    use rand::seq::SliceRandom;
 
     /// Color linear interpolation, returns a Crossterm struct.
     pub fn color_lerp(a: (u8, u8, u8), b: (u8, u8, u8), t: f32) -> Color {
@@ -54,5 +55,21 @@ mod util {
     /// Calculate net WPM from typed characters and time, with consideration for errors.
     pub fn wpm_net(k: usize, e: usize, dur: Duration) -> f32 {
         wpm_gross(k, dur) - (e as f32 / (dur.as_secs() as f32 / 60.))
+    }
+
+    /// Split a string into a vector of its lines.
+    pub fn str_to_tokens(src: &str) -> Vec<&str> {
+        src.lines().collect::<Vec<&str>>()
+    }
+
+    /// Select `n` number of tokens to create a random phrase.
+    pub fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
+        let mut rng = rand::thread_rng();
+        let mut str = String::new();
+        for _ in 0..n {
+            str += tokens.choose(&mut rng).unwrap();
+            str += " ";
+        }
+        str.trim().to_string()
     }
 }

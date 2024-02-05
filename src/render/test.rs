@@ -12,6 +12,11 @@ use crossterm::{
     terminal::{disable_raw_mode, size},
 };
 
+/// English 1k most used
+pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
+/// English 10k most used
+pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
+
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
     /// Phrase the user will be tested on.
