@@ -9,7 +9,7 @@ use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
-    terminal::{disable_raw_mode, enable_raw_mode, size},
+    terminal::{disable_raw_mode, size},
 };
 
 /// Renders a typing test with the given phrase.
@@ -52,7 +52,6 @@ impl TestRenderer {
         let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
         let mut stdout = stdout(); // stdout handle
         let timer = Instant::now(); // timer for WPM calculation
-        enable_raw_mode().expect("failed to enable raw mode");
         clear(&mut stdout);
 
         // play loop
@@ -115,9 +114,12 @@ impl TestRenderer {
             }
         }
 
-        // close out rendering
+        // show cursor and disable raw mode
+        // raw mode also gets disabled by `main.rs`, but this is necessary in this particular case
+        // in order to make the wpm summary print correctly. we still want the enable and disable
+        // calls in `main.rs` to avoid repetition in other modules
         execute!(stdout, Show)?;
-        disable_raw_mode().expect("failed to disable raw mode");
+        disable_raw_mode()?;
         clear(&mut stdout);
 
         // give user wpm

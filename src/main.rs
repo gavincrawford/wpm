@@ -1,4 +1,5 @@
 use clap::{arg, Command};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use rand::seq::SliceRandom;
 
 mod render;
@@ -51,6 +52,15 @@ fn main() -> Result<(), std::io::Error> {
     let tokens: Vec<&str> = str_to_tokens(wordlist);
     let phrase = tokens_to_phrase(length, &tokens);
 
+    // enable raw terminal
+    enable_raw_mode().expect("failed to enable raw mode");
+
     // render test
-    render::test::TestRenderer::new(phrase).render()
+    render::test::TestRenderer::new(phrase).render()?;
+
+    // disable raw terminal
+    disable_raw_mode().expect("failed to disable raw mode");
+
+    // done
+    Ok(())
 }
