@@ -118,8 +118,12 @@ impl TestRenderer {
         execute!(stdout, Show)?;
         clear(&mut stdout);
 
-        // give user wpm
-        // TODO don't show this when the user ends the test early
+        // if the test was ended early, don't give a score
+        if !(self.cursor == self.phrase.len()) {
+            return Ok(());
+        }
+
+        // otherwise, give score report
         execute!(
             stdout,
             Print(format!(
@@ -134,8 +138,6 @@ impl TestRenderer {
             ))
         )?;
         std::thread::sleep(Duration::from_secs(1));
-
-        // done
         Ok(())
     }
 
