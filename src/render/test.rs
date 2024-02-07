@@ -5,17 +5,12 @@ use std::{
 
 use super::util::*;
 use crossterm::{
-    cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
+    cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
     terminal::{disable_raw_mode, size},
 };
-
-/// English 1k most used
-pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
-/// English 10k most used
-pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
 
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
@@ -119,21 +114,25 @@ impl TestRenderer {
             }
         }
 
-        // show cursor and disable raw mode
-        // raw mode also gets disabled by `main.rs`, but this is necessary in this particular case
-        // in order to make the wpm summary print correctly. we still want the enable and disable
-        // calls in `main.rs` to avoid repetition in other modules
+        // show cursor and clear
         execute!(stdout, Show)?;
-        disable_raw_mode()?;
         clear(&mut stdout);
 
         // give user wpm
-        println!(
-            "GROSS: {:.2}wpm\nNET:   {:.2}wpm ({}X)",
-            wpm_gross(self.phrase.len(), timer.elapsed()),
-            wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
-            self.count_misses(),
-        );
+        execute!(
+            stdout,
+            Print(format!(
+                "GROSS: {:.2} wpm",
+                wpm_gross(self.phrase.len(), timer.elapsed())
+            )),
+            MoveToNextLine(1),
+            Print(format!(
+                "NET:   {:.2}wpm ({}X)",
+                wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
+                self.count_misses()
+            ))
+        )?;
+        std::thread::sleep(Duration::from_secs(1));
 
         // done
         Ok(())

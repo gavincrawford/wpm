@@ -4,6 +4,15 @@ pub mod menu;
 /// Test renderer.
 pub mod test;
 
+/// Statically stored wordlist content.
+mod wordlist {
+    /// English 1k most used
+    pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
+
+    /// English 10k most used
+    pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
+}
+
 /// Rendering utilities.
 mod util {
     use std::{io::Stdout, time::Duration};

@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use super::{test::TestRenderer, util::*};
+use super::{test::TestRenderer, util::*, wordlist::ENG_1K};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -19,17 +19,46 @@ pub struct MenuRenderer {
     menu: Vec<(String, MenuElement)>,
 }
 
+/// Represents menu options when rendered.
 #[derive(Clone)]
 enum MenuElement {
-    Test { length: usize },
+    Test { length: usize, wordlist: Wordlist },
     Profile,
+}
+
+/// Wordlist enumerator, which represents wordlists without carrying around all the weight.
+#[derive(Clone)]
+enum Wordlist {
+    English1k,
+    English10k,
+}
+
+/// Converts enum to wordlist content.
+fn get_wordlist_content(wordlist: &Wordlist) -> String {
+    use super::wordlist::*;
+    match wordlist {
+        Wordlist::English1k => ENG_1K.into(),
+        Wordlist::English10k => ENG_10K.into(),
+    }
 }
 
 impl MenuRenderer {
     pub fn new() -> Self {
         let menu = vec![
-            ("10 word", MenuElement::Test { length: 10 }),
-            ("25 word", MenuElement::Test { length: 25 }),
+            (
+                "10 easy",
+                MenuElement::Test {
+                    length: 10,
+                    wordlist: Wordlist::English1k,
+                },
+            ),
+            (
+                "25 hard",
+                MenuElement::Test {
+                    length: 25,
+                    wordlist: Wordlist::English10k,
+                },
+            ),
             ("profile statistics", MenuElement::Profile),
         ];
         let menu = menu
@@ -106,13 +135,12 @@ impl MenuRenderer {
             Enter => {
                 if let Some(e) = self.menu.get(self.cursor) {
                     use MenuElement::*;
-                    match e.1 {
-                        Test { length } => {
-                            // TODO allow user to select wordlist
-                            let tokens: Vec<&str> = str_to_tokens(super::test::ENG_1K);
-                            let phrase = tokens_to_phrase(length, &tokens);
+                    match &e.1 {
+                        Test { length, wordlist } => {
+                            let wordlist = get_wordlist_content(wordlist);
+                            let tokens: Vec<&str> = str_to_tokens(wordlist.as_str());
+                            let phrase = tokens_to_phrase(*length, &tokens);
                             TestRenderer::new(phrase).render().expect("Test failed.");
-                            std::process::exit(0); // TODO fix
                         }
                         Profile => {
                             todo!()
