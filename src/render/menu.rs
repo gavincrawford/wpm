@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use super::{test::TestRenderer, util::*, wordlist::ENG_1K};
+use super::{test::TestRenderer, util::*};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -59,7 +59,7 @@ impl MenuRenderer {
                     wordlist: Wordlist::English10k,
                 },
             ),
-            ("profile statistics", MenuElement::Profile),
+            ("profile statistics (WIP)", MenuElement::Profile),
         ];
         let menu = menu
             .iter()

@@ -9,7 +9,7 @@ use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
-    terminal::{disable_raw_mode, size},
+    terminal::size,
 };
 
 /// Renders a typing test with the given phrase.
@@ -119,6 +119,7 @@ impl TestRenderer {
         clear(&mut stdout);
 
         // give user wpm
+        // TODO don't show this when the user ends the test early
         execute!(
             stdout,
             Print(format!(
