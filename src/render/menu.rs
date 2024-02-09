@@ -4,6 +4,7 @@ use std::{
 };
 
 use super::{test::TestRenderer, util::*, wordlist::*};
+use crate::profile::Profile;
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -15,6 +16,8 @@ use crossterm::{
 pub struct MenuRenderer {
     /// Selected menu option, where 0 is the top.
     cursor: usize,
+    /// Active profile.
+    profile: Option<Profile>,
     /// Menu elements.
     menu: Vec<(String, MenuElement)>,
 }
@@ -27,7 +30,7 @@ enum MenuElement {
 }
 
 impl MenuRenderer {
-    pub fn new() -> Self {
+    pub fn new(profile: Option<Profile>) -> Self {
         let menu = vec![
             (
                 "10 easy",
@@ -49,22 +52,47 @@ impl MenuRenderer {
             .iter()
             .map(|e| (String::from(e.0), e.1.clone()))
             .collect::<Vec<(String, MenuElement)>>();
-        Self { cursor: 0, menu }
+        Self {
+            cursor: 0,
+            profile,
+            menu,
+        }
     }
 
     /// Renders the menu util exited or a test is started.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
+        // update profile stats, just in case
+        if let Some(profile) = self.profile.as_mut() {
+            profile.update_stats();
+        }
+
+        // get stdout handle
         let mut stdout = stdout();
         loop {
-            // render menu elements
+            // print label and profile notification
             clear(&mut stdout);
             queue!(
                 stdout,
                 Hide,
                 MoveTo(0, 0),
                 Print("WPM".on_dark_grey().grey()),
-                MoveToNextLine(1)
             )?;
+            if self.profile.is_none() {
+                queue!(
+                    stdout,
+                    MoveRight(1),
+                    Print("PROFILE UNLINKED".on_red().black())
+                )?;
+            } else {
+                queue!(
+                    stdout,
+                    MoveRight(1),
+                    Print("PROFILE LINKED".on_green().black())
+                )?;
+            }
+            queue!(stdout, MoveToNextLine(1))?;
+
+            // render menu elements
             for (idx, (label, _)) in self.menu.iter().enumerate() {
                 if idx == self.cursor {
                     queue!(
@@ -77,6 +105,41 @@ impl MenuRenderer {
                     queue!(stdout, MoveRight(2), Print(label), MoveToNextLine(1))?;
                 }
             }
+
+            // render some simple profile stats
+            if let Some(profile) = &self.profile {
+                let stats = profile.get_stats();
+                queue!(
+                    stdout,
+                    MoveToNextLine(1),
+                    Print(format!(
+                        "|{:^32}| {}",
+                        "total tests taken", stats.total_tests
+                    )),
+                    MoveToNextLine(1),
+                    Print(format!(
+                        "|{:^32}| {:.1}wpm",
+                        "average gross", stats.average_gross_wpm
+                    )),
+                    MoveToNextLine(1),
+                    Print(format!(
+                        "|{:^32}| {:.1}wpm",
+                        "average net", stats.average_net_wpm
+                    )),
+                    MoveToNextLine(1),
+                    Print(format!(
+                        "|{:^32}| {}s",
+                        "average test time", stats.average_test_time
+                    )),
+                    MoveToNextLine(1),
+                    Print(format!(
+                        "|{:^32}| {}w",
+                        "average test length", stats.average_test_length
+                    )),
+                )?;
+            }
+
+            // flush
             stdout.flush()?;
 
             // handle events
@@ -87,7 +150,14 @@ impl MenuRenderer {
                 use KeyCode::*;
                 match read()? {
                     Key(key) => match key.code {
-                        Esc => break,
+                        Esc => {
+                            if let Some(profile) = &self.profile {
+                                profile
+                                    .write_to("profile")
+                                    .expect("Failed to write profile.");
+                            }
+                            break;
+                        }
                         _ => self.handle_key(key),
                     },
                     _ => {}
@@ -121,10 +191,16 @@ impl MenuRenderer {
                     use MenuElement::*;
                     match &e.1 {
                         Test { length, wordlist } => {
-                            let wordlist = get_wordlist_content(wordlist);
-                            let tokens: Vec<&str> = str_to_tokens(wordlist.as_str());
+                            let content = get_wordlist_content(wordlist);
+                            let tokens: Vec<&str> = str_to_tokens(content.as_str());
                             let phrase = tokens_to_phrase(*length, &tokens);
-                            TestRenderer::new(phrase).render().expect("Test failed.");
+                            let result = TestRenderer::new(wordlist.clone(), phrase)
+                                .render()
+                                .expect("Test failed.");
+                            if let Some(profile) = self.profile.as_mut() {
+                                profile.record(result);
+                                profile.update_stats();
+                            }
                         }
                         Profile => {
                             todo!()

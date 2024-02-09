@@ -3,7 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::util::*;
+use crate::profile::TestResult;
+
+use super::{util::*, wordlist::Wordlist};
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -14,6 +16,8 @@ use crossterm::{
 
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
+    /// Wordlist used.
+    wordlist: Wordlist,
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters, generated from the phrase.
@@ -32,8 +36,9 @@ enum Letter {
 }
 
 impl TestRenderer {
-    pub fn new(phrase: String) -> Self {
+    pub fn new(wordlist: Wordlist, phrase: String) -> Self {
         Self {
+            wordlist,
             phrase: phrase.clone(),
             letters: phrase
                 .as_bytes()
@@ -46,7 +51,7 @@ impl TestRenderer {
 
     /// Starts and runs the test until completed. Uses key handlers and other supporting functions to
     /// work as intended.
-    pub fn render(&mut self) -> Result<(), std::io::Error> {
+    pub fn render(&mut self) -> Result<TestResult, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
         let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
@@ -120,10 +125,21 @@ impl TestRenderer {
 
         // if the test was ended early, don't give a score
         if !(self.cursor == self.phrase.len()) {
-            return Ok(());
+            todo!("don't give result for test fail"); // TODO
         }
 
         // otherwise, give score report
+        let result = TestResult::new(
+            self.phrase.len() / 5, // TODO this is inaccurate
+            self.wordlist.clone(),
+            self.count_hits(),
+            self.count_misses(),
+            timer.elapsed(),
+            (
+                wpm_gross(self.phrase.len(), timer.elapsed()),
+                wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
+            ),
+        );
         execute!(
             stdout,
             Print(format!(
@@ -138,7 +154,7 @@ impl TestRenderer {
             ))
         )?;
         std::thread::sleep(Duration::from_secs(1));
-        Ok(())
+        Ok(result)
     }
 
     /// Handles a keypress.
@@ -171,6 +187,17 @@ impl TestRenderer {
             }
             _ => {}
         }
+    }
+
+    /// Counts the number of instances of the `Letter::Hit`.
+    fn count_hits(&self) -> usize {
+        let mut hits = 0;
+        for l in &self.letters {
+            if let Letter::Hit(_) = **l {
+                hits += 1;
+            }
+        }
+        hits
     }
 
     /// Counts the number of instances of the `Letter::Miss`.
