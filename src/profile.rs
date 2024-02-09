@@ -20,7 +20,7 @@ struct TestResult {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Profile {
+pub struct Profile {
     /// Test history.
     history: Vec<TestResult>,
 }
