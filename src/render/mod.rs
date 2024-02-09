@@ -5,16 +5,34 @@ pub mod menu;
 pub mod test;
 
 /// Statically stored wordlist content.
-mod wordlist {
+pub mod wordlist {
+    use serde_derive::{Deserialize, Serialize};
+
     /// English 1k most used
     pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
 
     /// English 10k most used
     pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
+
+    /// Wordlist enumerator, which represents wordlists without carrying around all the weight.
+    #[derive(Clone, Serialize, Deserialize)]
+    pub enum Wordlist {
+        English1k,
+        English10k,
+    }
+
+    /// Converts enum to wordlist content.
+    pub fn get_wordlist_content(wordlist: &Wordlist) -> String {
+        use super::wordlist::*;
+        match wordlist {
+            Wordlist::English1k => ENG_1K.into(),
+            Wordlist::English10k => ENG_10K.into(),
+        }
+    }
 }
 
 /// Rendering utilities.
-mod util {
+pub mod util {
     use std::{io::Stdout, time::Duration};
 
     use crossterm::{

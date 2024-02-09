@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use super::{test::TestRenderer, util::*};
+use super::{test::TestRenderer, util::*, wordlist::*};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -24,22 +24,6 @@ pub struct MenuRenderer {
 enum MenuElement {
     Test { length: usize, wordlist: Wordlist },
     Profile,
-}
-
-/// Wordlist enumerator, which represents wordlists without carrying around all the weight.
-#[derive(Clone)]
-enum Wordlist {
-    English1k,
-    English10k,
-}
-
-/// Converts enum to wordlist content.
-fn get_wordlist_content(wordlist: &Wordlist) -> String {
-    use super::wordlist::*;
-    match wordlist {
-        Wordlist::English1k => ENG_1K.into(),
-        Wordlist::English10k => ENG_10K.into(),
-    }
 }
 
 impl MenuRenderer {

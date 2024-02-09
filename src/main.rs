@@ -1,5 +1,6 @@
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
+mod profile;
 mod render;
 
 fn main() -> Result<(), std::io::Error> {
