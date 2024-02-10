@@ -130,7 +130,7 @@ impl TestRenderer {
 
         // otherwise, give score report
         let result = TestResult::new(
-            self.phrase.len() / 5, // TODO this is inaccurate
+            self.phrase.split_whitespace().count(),
             self.wordlist.clone(),
             self.count_hits(),
             self.count_misses(),
