@@ -181,14 +181,22 @@ impl MenuRenderer {
                     use MenuElement::*;
                     match &e.1 {
                         Test { length, wordlist } => {
+                            // run test
                             let content = get_wordlist_content(wordlist);
                             let tokens: Vec<&str> = str_to_tokens(content.as_str());
                             let phrase = tokens_to_phrase(*length, &tokens);
                             let result = TestRenderer::new(wordlist.clone(), phrase)
                                 .render()
                                 .expect("Test failed.");
+
+                            // if user abandoned test, we're done here
+                            if result.is_none() {
+                                return;
+                            }
+
+                            // otherwise, add test record to profile
                             if let Some(profile) = self.profile.as_mut() {
-                                profile.record(result);
+                                profile.record(result.unwrap());
                                 profile.update_stats();
                             }
                         }

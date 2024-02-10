@@ -51,7 +51,7 @@ impl TestRenderer {
 
     /// Starts and runs the test until completed. Uses key handlers and other supporting functions to
     /// work as intended.
-    pub fn render(&mut self) -> Result<TestResult, std::io::Error> {
+    pub fn render(&mut self) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
         let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
@@ -125,7 +125,7 @@ impl TestRenderer {
 
         // if the test was ended early, don't give a score
         if !(self.cursor == self.phrase.len()) {
-            todo!("don't give result for test fail"); // TODO
+            return Ok(None);
         }
 
         // otherwise, give score report
@@ -154,7 +154,7 @@ impl TestRenderer {
             ))
         )?;
         std::thread::sleep(Duration::from_secs(1));
-        Ok(result)
+        Ok(Some(result))
     }
 
     /// Handles a keypress.
