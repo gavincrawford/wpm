@@ -126,16 +126,6 @@ impl MenuRenderer {
                         "|{:^32}| {:.1}wpm",
                         "average net", stats.average_net_wpm
                     )),
-                    MoveToNextLine(1),
-                    Print(format!(
-                        "|{:^32}| {}s",
-                        "average test time", stats.average_test_time
-                    )),
-                    MoveToNextLine(1),
-                    Print(format!(
-                        "|{:^32}| {}w",
-                        "average test length", stats.average_test_length
-                    )),
                 )?;
             }
 

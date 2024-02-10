@@ -43,10 +43,6 @@ impl TestResult {
 pub struct ProfileStatistics {
     /// Number of tests.
     pub total_tests: u64,
-    /// Average test time in seconds.
-    pub average_test_time: u64,
-    /// Average test length in words.
-    pub average_test_length: u64,
     /// Average gross WPM.
     pub average_gross_wpm: f32,
     /// Average net WPM.
@@ -72,25 +68,17 @@ impl Profile {
         // total tests
         self.stats.total_tests = self.history.len() as u64;
 
-        // average length and time
+        // average wpms
         if self.stats.total_tests == 0 {
-            self.stats.average_test_length = 0;
-            self.stats.average_test_time = 0;
             self.stats.average_gross_wpm = 0.;
             self.stats.average_net_wpm = 0.;
         } else {
-            let mut length_sum = 0;
-            let mut time_sum = 0;
             let mut gross_sum = 0.;
             let mut net_sum = 0.;
             for test in &self.history {
-                length_sum += test.length as u64;
-                time_sum += test.time.as_secs();
                 gross_sum += test.wpm.0;
                 net_sum += test.wpm.1;
             }
-            self.stats.average_test_length = length_sum / self.stats.total_tests;
-            self.stats.average_test_time = time_sum / self.stats.total_tests;
             self.stats.average_gross_wpm = gross_sum / self.stats.total_tests as f32;
             self.stats.average_net_wpm = net_sum / self.stats.total_tests as f32;
         }
