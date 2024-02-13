@@ -16,22 +16,11 @@ fn main() -> Result<(), std::io::Error> {
 
     // render menu, which can create and administer tests
     if args.get_flag("no-profile") {
-        // run with no profile
         render::menu::MenuRenderer::new(None).render()?;
     } else if let Some(profile) = args.get_one::<String>("profile") {
-        // run with user-provided profile
-        if let Ok(profile) = profile::Profile::read_from(profile) {
-            render::menu::MenuRenderer::new(Some(profile)).render()?;
-        } else {
-            eprintln!("This profile does not exist.");
-        }
-    } else if let Ok(profile) = profile::Profile::read_from("profile") {
-        // run with default profile
-        render::menu::MenuRenderer::new(Some(profile)).render()?;
+        render::menu::MenuRenderer::new(Some(profile.clone())).render()?;
     } else {
-        // if no other option, run with new, default profile
-        let profile = profile::Profile::default();
-        render::menu::MenuRenderer::new(Some(profile)).render()?;
+        render::menu::MenuRenderer::new(Some(String::from("profile"))).render()?;
     }
 
     // disable raw terminal

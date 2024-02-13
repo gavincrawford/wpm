@@ -18,6 +18,8 @@ pub struct MenuRenderer {
     cursor: usize,
     /// Active profile.
     profile: Option<Profile>,
+    /// Profile path. If not overridden, it will default to "profile".
+    profile_path: String,
     /// Menu elements.
     menu: Vec<(String, MenuElement)>,
 }
@@ -30,7 +32,24 @@ enum MenuElement {
 }
 
 impl MenuRenderer {
-    pub fn new(profile: Option<Profile>) -> Self {
+    pub fn new(profile_path: Option<String>) -> Self {
+        // open profile
+        let profile;
+        if let Some(profile_path) = &profile_path {
+            // if profile exists, get it. otherwise, make a default one
+            if let Ok(profile_from_data) = Profile::read_from(profile_path) {
+                profile = Some(profile_from_data);
+            } else {
+                profile = Some(Profile::default());
+            }
+        } else {
+            profile = None;
+        }
+
+        // if no path override is provided, default to `./profile`
+        let profile_path = profile_path.unwrap_or(String::from("profile"));
+
+        // make menu items
         let menu = vec![
             (
                 "10 easy",
@@ -55,6 +74,7 @@ impl MenuRenderer {
         Self {
             cursor: 0,
             profile,
+            profile_path,
             menu,
         }
     }
@@ -87,7 +107,11 @@ impl MenuRenderer {
                 queue!(
                     stdout,
                     MoveRight(1),
-                    Print("PROFILE LINKED".on_green().black())
+                    Print(format!(
+                        "{} (./{})",
+                        "PROFILE LINKED".on_green().black(),
+                        self.profile_path.clone().grey().bold()
+                    )),
                 )?;
             }
             queue!(stdout, MoveToNextLine(1))?;
@@ -143,7 +167,7 @@ impl MenuRenderer {
                         Esc => {
                             if let Some(profile) = &self.profile {
                                 profile
-                                    .write_to("profile")
+                                    .write_to(self.profile_path.clone())
                                     .expect("Failed to write profile.");
                             }
                             break;
