@@ -22,6 +22,8 @@ pub struct TestRenderer {
     phrase: String,
     /// Letters, generated from the phrase.
     letters: Vec<Box<Letter>>,
+    /// Test timer.
+    timer: Option<Instant>,
     /// Cursor position.
     cursor: usize,
 }
@@ -45,6 +47,7 @@ impl TestRenderer {
                 .iter()
                 .map(|c| Box::from(Letter::Char(*c as char)))
                 .collect::<Vec<Box<Letter>>>(),
+            timer: None,
             cursor: 0,
         }
     }
@@ -56,7 +59,6 @@ impl TestRenderer {
         let screen_size = size()?; // does NOT live update
         let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
         let mut stdout = stdout(); // stdout handle
-        let timer = Instant::now(); // timer for WPM calculation
         clear(&mut stdout);
 
         // play loop
@@ -129,6 +131,7 @@ impl TestRenderer {
         }
 
         // otherwise, give score report
+        let timer = self.timer.expect("Timer unexpectedly uninitialized.");
         let result = TestResult::new(
             self.phrase.split_whitespace().count(),
             self.wordlist.clone(),
@@ -164,6 +167,12 @@ impl TestRenderer {
 
     /// Handles a keypress.
     fn handle_key(&mut self, key: KeyEvent) {
+        // if timer hasn't started, the first kepress should start it
+        if self.timer.is_none() {
+            self.timer = Some(Instant::now());
+        }
+
+        // handle keypress
         use KeyCode::*;
         match key.code {
             Backspace => {
