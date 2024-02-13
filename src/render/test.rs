@@ -160,7 +160,9 @@ impl TestRenderer {
         )?;
 
         // wait ten seconds or skip with a keypress
-        poll(Duration::from_secs(10))?;
+        if poll(Duration::from_secs(10))? {
+            read()?;
+        }
 
         Ok(Some(result))
     }
