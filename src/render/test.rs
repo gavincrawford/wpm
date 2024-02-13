@@ -151,9 +151,14 @@ impl TestRenderer {
                 "NET:   {:.2}wpm ({}X)",
                 wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
                 self.count_misses()
-            ))
+            )),
+            MoveToNextLine(2),
+            Print("Press any key to continue.".italic())
         )?;
-        std::thread::sleep(Duration::from_secs(1));
+
+        // wait ten seconds or skip with a keypress
+        poll(Duration::from_secs(10))?;
+
         Ok(Some(result))
     }
 
