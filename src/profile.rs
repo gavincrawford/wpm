@@ -6,17 +6,17 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct TestResult {
     /// Test length in words.
-    length: usize,
+    pub length: usize,
     /// Wordlist used.
-    wordlist: Wordlist,
+    pub wordlist: Wordlist,
     /// Hit count.
-    hits: usize,
+    pub hits: usize,
     /// Miss count.
-    misses: usize,
+    pub misses: usize,
     /// Total time taken.
-    time: Duration,
+    pub time: Duration,
     /// Calculated WPMs, in (gross, net) format.
-    wpm: (f32, f32),
+    pub wpm: (f32, f32),
 }
 
 impl TestResult {
@@ -61,6 +61,11 @@ impl Profile {
     /// Get an immutable snapshot of this profile's statistics.
     pub fn get_stats(&self) -> &ProfileStatistics {
         &self.stats
+    }
+
+    /// Get an immutable snapshot of this profile's history.
+    pub fn get_history(&self) -> &Vec<TestResult> {
+        &self.history
     }
 
     /// Update this profile's statistics.

@@ -4,7 +4,7 @@ use std::{
 };
 
 use super::{test::TestRenderer, util::*, wordlist::*};
-use crate::profile::Profile;
+use crate::{profile::Profile, render::profile::ProfileRenderer};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -225,7 +225,10 @@ impl MenuRenderer {
                             }
                         }
                         Profile => {
-                            todo!()
+                            if let Some(profile) = &self.profile {
+                                // TODO no unwrap
+                                ProfileRenderer::new(&profile).render().unwrap();
+                            }
                         }
                     }
                 }

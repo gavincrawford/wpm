@@ -1,6 +1,9 @@
 /// Menu renderer.
 pub mod menu;
 
+/// Profile statistics renderer.
+pub mod profile;
+
 /// Test renderer.
 pub mod test;
 
