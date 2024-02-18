@@ -226,8 +226,9 @@ impl MenuRenderer {
                         }
                         Profile => {
                             if let Some(profile) = &self.profile {
-                                // TODO no unwrap
-                                ProfileRenderer::new(&profile).render().unwrap();
+                                ProfileRenderer::new(&profile)
+                                    .render()
+                                    .expect("Profile statistics failed.");
                             }
                         }
                     }
