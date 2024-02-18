@@ -1,5 +1,6 @@
 use std::{
     io::{stdout, Write},
+    process::exit,
     time::Duration,
 };
 
@@ -88,6 +89,7 @@ impl MenuRenderer {
 
         // get stdout handle
         let mut stdout = stdout();
+        let mut err: Result<(), std::io::Error> = Ok(());
         loop {
             // print label and profile notification
             clear(&mut stdout);
@@ -153,6 +155,15 @@ impl MenuRenderer {
                 )?;
             }
 
+            // render errors
+            if let Err(ref e) = err {
+                queue!(
+                    stdout,
+                    MoveToNextLine(2),
+                    Print(format!("ERROR({:?})", e.to_string()).on_dark_red())
+                )?;
+            }
+
             // flush
             stdout.flush()?;
 
@@ -162,7 +173,7 @@ impl MenuRenderer {
             } else {
                 use Event::*;
                 use KeyCode::*;
-                match read()? {
+                err = match read()? {
                     Key(key) => match key.code {
                         Esc => {
                             if let Some(profile) = &self.profile {
@@ -174,8 +185,8 @@ impl MenuRenderer {
                         }
                         _ => self.handle_key(key),
                     },
-                    _ => {}
-                }
+                    _ => Ok(()),
+                };
             }
 
             // clamp cursor after handling events, just in case it went out of bounds
@@ -187,7 +198,7 @@ impl MenuRenderer {
     }
 
     /// Handles a keypress.
-    fn handle_key(&mut self, key: KeyEvent) {
+    fn handle_key(&mut self, key: KeyEvent) -> Result<(), std::io::Error> {
         use KeyCode::*;
         match key.code {
             Down | Char('j') => {
@@ -209,13 +220,11 @@ impl MenuRenderer {
                             let content = get_wordlist_content(wordlist);
                             let tokens: Vec<&str> = str_to_tokens(content.as_str());
                             let phrase = tokens_to_phrase(*length, &tokens);
-                            let result = TestRenderer::new(wordlist.clone(), phrase)
-                                .render()
-                                .expect("Test failed.");
+                            let result = TestRenderer::new(wordlist.clone(), phrase).render()?;
 
                             // if user abandoned test, we're done here
                             if result.is_none() {
-                                return;
+                                return Ok(());
                             }
 
                             // otherwise, add test record to profile
@@ -226,9 +235,7 @@ impl MenuRenderer {
                         }
                         Profile => {
                             if let Some(profile) = &self.profile {
-                                ProfileRenderer::new(&profile)
-                                    .render()
-                                    .expect("Profile statistics failed.");
+                                ProfileRenderer::new(&profile).render()?
                             }
                         }
                     }
@@ -236,5 +243,6 @@ impl MenuRenderer {
             }
             _ => {}
         }
+        Ok(())
     }
 }
