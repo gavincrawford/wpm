@@ -5,7 +5,10 @@ use std::{
 
 use crate::profile::TestResult;
 
-use super::{util::*, wordlist::Wordlist};
+use super::{
+    util::*,
+    wordlist::{Mode, Wordlist},
+};
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -18,6 +21,8 @@ use crossterm::{
 pub struct TestRenderer {
     /// Wordlist used.
     wordlist: Wordlist,
+    /// Mode used.
+    mode: Mode,
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters, generated from the phrase.
@@ -38,9 +43,10 @@ enum Letter {
 }
 
 impl TestRenderer {
-    pub fn new(wordlist: Wordlist, phrase: String) -> Self {
+    pub fn new(wordlist: Wordlist, phrase: String, mode: Mode) -> Self {
         Self {
             wordlist,
+            mode,
             phrase: phrase.clone(),
             letters: phrase
                 .as_bytes()
@@ -57,14 +63,38 @@ impl TestRenderer {
     pub fn render(&mut self) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
-        let screen_limits = ((4, 1), (screen_size.0 - 8, 100));
+        let screen_limits = ((4, 3), (screen_size.0 - 8, 100));
         let mut stdout = stdout(); // stdout handle
         clear(&mut stdout);
 
         // play loop
         loop {
-            // render
+            // render mode, then move to the top corner of the draw area and hide
+            queue!(stdout, MoveTo(5, 1))?;
+            match self.mode {
+                Mode::Words(_) => {
+                    queue!(stdout, Print(" WORDS".on_dark_magenta().white()))?;
+                }
+                Mode::Time(duration) => {
+                    queue!(
+                        stdout,
+                        Print(
+                            format!(
+                                " TIME [ {:.2}s]",
+                                (duration.saturating_sub(
+                                    self.timer.unwrap_or(Instant::now()).elapsed()
+                                ))
+                                .as_secs_f32()
+                            )
+                            .on_dark_green()
+                            .white()
+                        )
+                    )?;
+                }
+            }
             queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;
+
+            // render characters
             let mut letters_on_line = 0;
             let mut lines_on_screen = 0;
             for (idx, letter) in self.letters.iter().enumerate() {
@@ -101,7 +131,16 @@ impl TestRenderer {
             stdout.flush()?;
 
             // end condition
-            if self.cursor == self.letters.len() {
+            if match self.mode {
+                Mode::Words(_) => self.cursor == self.letters.len(),
+                Mode::Time(duration) => {
+                    if let Some(timer) = self.timer {
+                        timer.elapsed() >= duration
+                    } else {
+                        false
+                    }
+                }
+            } {
                 break;
             }
 
@@ -126,8 +165,13 @@ impl TestRenderer {
         clear(&mut stdout);
 
         // if the test was ended early, don't give a score
-        if !(self.cursor == self.phrase.len()) {
-            return Ok(None);
+        match self.mode {
+            Mode::Words(_) => {
+                if !(self.cursor == self.phrase.len()) {
+                    return Ok(None);
+                }
+            }
+            _ => {}
         }
 
         // otherwise, give score report

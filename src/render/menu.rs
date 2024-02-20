@@ -28,7 +28,7 @@ pub struct MenuRenderer {
 /// Represents menu options when rendered.
 #[derive(Clone)]
 enum MenuElement {
-    Test { length: usize, wordlist: Wordlist },
+    Test { wordlist: Wordlist, mode: Mode },
     Profile,
 }
 
@@ -53,17 +53,17 @@ impl MenuRenderer {
         // make menu items
         let menu = vec![
             (
-                "10 easy",
+                "10 words easy",
                 MenuElement::Test {
-                    length: 10,
                     wordlist: Wordlist::English1k,
+                    mode: Mode::Words(10),
                 },
             ),
             (
-                "25 hard",
+                "15 seconds easy",
                 MenuElement::Test {
-                    length: 25,
                     wordlist: Wordlist::English10k,
+                    mode: Mode::Time(Duration::from_secs(15)),
                 },
             ),
             ("profile statistics (WIP)", MenuElement::Profile),
@@ -215,12 +215,17 @@ impl MenuRenderer {
                 if let Some(e) = self.menu.get(self.cursor) {
                     use MenuElement::*;
                     match &e.1 {
-                        Test { length, wordlist } => {
-                            // run test
+                        Test { mode, wordlist } => {
+                            // get test wordlist information for later
                             let content = get_wordlist_content(wordlist);
                             let tokens: Vec<&str> = str_to_tokens(content.as_str());
-                            let phrase = tokens_to_phrase(*length, &tokens);
-                            let result = TestRenderer::new(wordlist.clone(), phrase).render()?;
+                            let phrase = match mode {
+                                Mode::Words(length) => tokens_to_phrase(*length, &tokens),
+                                Mode::Time(_) => tokens_to_phrase(100, &tokens),
+                            };
+                            let result =
+                                TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
+                                    .render()?;
 
                             // if user abandoned test, we're done here
                             if result.is_none() {

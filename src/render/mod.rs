@@ -10,6 +10,7 @@ pub mod test;
 /// Statically stored wordlist content.
 pub mod wordlist {
     use serde_derive::{Deserialize, Serialize};
+    use std::time::Duration;
 
     /// English 1k most used
     pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
@@ -22,6 +23,13 @@ pub mod wordlist {
     pub enum Wordlist {
         English1k,
         English10k,
+    }
+
+    /// Mode enumerator, represents which mode a test is in.
+    #[derive(Clone, Serialize, Deserialize, PartialEq)]
+    pub enum Mode {
+        Words(usize),
+        Time(Duration),
     }
 
     /// Converts enum to wordlist content.
