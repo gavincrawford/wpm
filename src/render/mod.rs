@@ -25,13 +25,6 @@ pub mod wordlist {
         English10k,
     }
 
-    /// Mode enumerator, represents which mode a test is in.
-    #[derive(Clone, Serialize, Deserialize, PartialEq)]
-    pub enum Mode {
-        Words(usize),
-        Time(Duration),
-    }
-
     /// Converts enum to wordlist content.
     pub fn get_wordlist_content(wordlist: &Wordlist) -> String {
         use super::wordlist::*;

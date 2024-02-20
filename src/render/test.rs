@@ -5,10 +5,7 @@ use std::{
 
 use crate::profile::TestResult;
 
-use super::{
-    util::*,
-    wordlist::{Mode, Wordlist},
-};
+use super::{util::*, wordlist::Wordlist};
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -16,6 +13,13 @@ use crossterm::{
     style::{Print, Stylize},
     terminal::size,
 };
+
+/// Mode enumerator, represents which mode a test is in.
+#[derive(Clone, PartialEq)]
+pub enum Mode {
+    Words(usize),
+    Time(Duration),
+}
 
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {

@@ -1,10 +1,9 @@
 use std::{
     io::{stdout, Write},
-    process::exit,
     time::Duration,
 };
 
-use super::{test::TestRenderer, util::*, wordlist::*};
+use super::{test::*, util::*, wordlist::*};
 use crate::{profile::Profile, render::profile::ProfileRenderer};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, Show},
