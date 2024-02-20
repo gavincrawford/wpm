@@ -1,11 +1,15 @@
-use std::io::{stdout, Write};
+use std::{
+    io::{stdout, Write},
+    time::Duration,
+};
 
 use super::util::*;
 use crate::profile::Profile;
 use crossterm::{
     cursor::{MoveTo, MoveToNextLine},
+    event::{poll, read},
     queue,
-    style::Print,
+    style::{Print, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size},
 };
 use textplots::*;
@@ -79,9 +83,14 @@ impl<'a> ProfileRenderer<'a> {
             .display();
         enable_raw_mode()?;
 
-        // wait
+        // add message and flush
+        queue!(stdout, Print("Press any key to exit.".italic()))?;
         stdout.flush()?;
-        std::thread::sleep(std::time::Duration::from_secs(4));
+
+        // wait for keypress
+        if poll(Duration::from_secs(10))? {
+            read()?;
+        }
 
         // done
         Ok(())
