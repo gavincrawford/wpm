@@ -10,7 +10,6 @@ pub mod test;
 /// Statically stored wordlist content.
 pub mod wordlist {
     use serde_derive::{Deserialize, Serialize};
-    use std::time::Duration;
 
     /// English 1k most used
     pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");

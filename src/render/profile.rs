@@ -1,13 +1,9 @@
-use std::{
-    io::{stdout, Write},
-    time::Duration,
-};
+use std::io::{stdout, Write};
 
 use super::util::*;
 use crate::profile::Profile;
 use crossterm::{
     cursor::{MoveTo, MoveToNextLine},
-    event::{poll, read},
     queue,
     style::{Print, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size},
