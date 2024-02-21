@@ -84,13 +84,11 @@ impl<'a> ProfileRenderer<'a> {
         enable_raw_mode()?;
 
         // add message and flush
-        queue!(stdout, Print("Press any key to exit.".italic()))?;
+        queue!(stdout, Print("Press enter to exit.".italic()))?;
         stdout.flush()?;
 
         // wait for keypress
-        if poll(Duration::from_secs(10))? {
-            read()?;
-        }
+        wait_until_enter(None);
 
         // done
         Ok(())

@@ -204,13 +204,11 @@ impl TestRenderer {
                 self.count_misses()
             )),
             MoveToNextLine(2),
-            Print("Press any key to continue.".italic())
+            Print("Press enter to continue.".italic())
         )?;
 
         // wait ten seconds or skip with a keypress
-        if poll(Duration::from_secs(10))? {
-            read()?;
-        }
+        wait_until_enter(Some(Duration::from_secs(10)));
 
         Ok(Some(result))
     }
