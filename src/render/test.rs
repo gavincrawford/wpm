@@ -7,7 +7,7 @@ use crate::profile::TestResult;
 
 use super::{util::*, wordlist::Wordlist};
 use crossterm::{
-    cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
+    cursor::{self, Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
@@ -175,41 +175,50 @@ impl TestRenderer {
                     return Ok(None);
                 }
             }
-            _ => {}
+            Mode::Time(duration) => {
+                if let Some(timer) = self.timer {
+                    if timer.elapsed() < duration {
+                        return Ok(None);
+                    }
+                }
+            }
         }
 
-        // otherwise, give score report
+        // get timer and wpm for score report, since the test was not terminated prematurely
         let timer = self.timer.expect("Timer unexpectedly uninitialized.");
+        let wpm = match self.mode {
+            Mode::Words(_) => (
+                wpm_gross(self.phrase.len(), timer.elapsed()),
+                wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
+            ),
+            Mode::Time(_) => (
+                wpm_gross(self.cursor, timer.elapsed()),
+                wpm_net(self.cursor, self.count_misses(), timer.elapsed()),
+            ),
+        };
+
+        // create test result
         let result = TestResult::new(
             self.phrase.split_whitespace().count(),
             self.wordlist.clone(),
             self.count_hits(),
             self.count_misses(),
             timer.elapsed(),
-            (
-                wpm_gross(self.phrase.len(), timer.elapsed()),
-                wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
-            ),
+            wpm,
         );
+
+        // display test stuff
         execute!(
             stdout,
-            Print(format!(
-                "GROSS: {:.2} wpm",
-                wpm_gross(self.phrase.len(), timer.elapsed())
-            )),
+            Print(format!("GROSS: {:.2} wpm", wpm.0)),
             MoveToNextLine(1),
-            Print(format!(
-                "NET:   {:.2}wpm ({}X)",
-                wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
-                self.count_misses()
-            )),
+            Print(format!("NET:   {:.2}wpm ({}X)", wpm.1, self.count_misses())),
             MoveToNextLine(2),
             Print("Press enter to continue.".italic())
         )?;
 
-        // wait ten seconds or skip with a keypress
+        // wait until enter is pressed, then return test result
         wait_until_enter(Some(Duration::from_secs(10)));
-
         Ok(Some(result))
     }
 
