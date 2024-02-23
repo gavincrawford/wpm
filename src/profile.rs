@@ -1,6 +1,6 @@
 use std::{fs::File, time::Duration};
 
-use crate::render::wordlist::Wordlist;
+use crate::render::{test::Mode, wordlist::Wordlist};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -9,6 +9,8 @@ pub struct TestResult {
     pub length: usize,
     /// Wordlist used.
     pub wordlist: Wordlist,
+    /// Mode used.
+    pub mode: Mode,
     /// Hit count.
     pub hits: usize,
     /// Miss count.
@@ -23,6 +25,7 @@ impl TestResult {
     pub fn new(
         length: usize,
         wordlist: Wordlist,
+        mode: Mode,
         hits: usize,
         misses: usize,
         time: Duration,
@@ -31,6 +34,7 @@ impl TestResult {
         Self {
             length,
             wordlist,
+            mode,
             hits,
             misses,
             time,

@@ -7,15 +7,16 @@ use crate::profile::TestResult;
 
 use super::{util::*, wordlist::Wordlist};
 use crossterm::{
-    cursor::{self, Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
+    cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
     terminal::size,
 };
+use serde_derive::{Deserialize, Serialize};
 
 /// Mode enumerator, represents which mode a test is in.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum Mode {
     Words(usize),
     Time(Duration),
@@ -201,6 +202,7 @@ impl TestRenderer {
         let result = TestResult::new(
             self.phrase.split_whitespace().count(),
             self.wordlist.clone(),
+            self.mode.clone(),
             self.count_hits(),
             self.count_misses(),
             timer.elapsed(),
