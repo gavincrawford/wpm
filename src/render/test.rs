@@ -68,7 +68,7 @@ impl TestRenderer {
     pub fn render(&mut self) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
-        let screen_limits = ((4, 3), (screen_size.0 - 8, 100));
+        let screen_limits = ((4, 3), (screen_size.0 - 8, 2));
         let mut stdout = stdout(); // stdout handle
         clear(&mut stdout);
 
@@ -103,6 +103,30 @@ impl TestRenderer {
             let mut letters_on_line = 0;
             let mut lines_on_screen = 0;
             for (idx, letter) in self.letters.iter().enumerate() {
+                // if there's too many letters on this line, go to next line
+                if letters_on_line >= screen_limits.1 .0 {
+                    lines_on_screen += 1;
+                    letters_on_line = 0;
+                    queue!(
+                        stdout,
+                        MoveTo(screen_limits.0 .0, screen_limits.0 .1 + lines_on_screen)
+                    )?;
+                }
+
+                // if there's too many lines, cut off here
+                if lines_on_screen >= screen_limits.1 .1 {
+                    queue!(
+                        stdout,
+                        MoveTo(
+                            (screen_size.0 / 2) as u16,
+                            screen_limits.0 .1 + lines_on_screen
+                        ),
+                        Print("...")
+                    )?;
+                    break;
+                }
+
+                // render letter
                 use Letter::*;
                 match **letter {
                     Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
@@ -113,17 +137,7 @@ impl TestRenderer {
                     }
                     Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
                 }
-
-                // TODO enforce screen_limits.1.1
                 letters_on_line += 1;
-                if letters_on_line >= screen_limits.1 .0 {
-                    lines_on_screen += 1;
-                    letters_on_line = 0;
-                    queue!(
-                        stdout,
-                        MoveTo(screen_limits.0 .0, screen_limits.0 .1 + lines_on_screen)
-                    )?;
-                }
             }
 
             queue!(stdout, move_to_wrap(self.cursor, screen_limits.1), Show)?;
