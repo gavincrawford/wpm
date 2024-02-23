@@ -106,13 +106,15 @@ pub mod util {
     }
 
     /// Calculate raw WPM from typed characters and time.
+    /// WPM values are clamped between 0 and 999.
     pub fn wpm_gross(k: usize, dur: Duration) -> f32 {
-        (k as f32 / 5.) / (dur.as_secs() as f32 / 60.)
+        ((k as f32 / 5.) / (dur.as_secs() as f32 / 60.)).clamp(0., 999.)
     }
 
     /// Calculate net WPM from typed characters and time, with consideration for errors.
+    /// WPM values are clamped between 0 and 999.
     pub fn wpm_net(k: usize, e: usize, dur: Duration) -> f32 {
-        wpm_gross(k, dur) - (e as f32 / (dur.as_secs() as f32 / 60.))
+        (wpm_gross(k, dur) - (e as f32 / (dur.as_secs() as f32 / 60.))).clamp(0., 999.)
     }
 
     /// Split a string into a vector of its lines.
