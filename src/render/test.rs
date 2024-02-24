@@ -69,12 +69,16 @@ impl TestRenderer {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
         let screen_limits = ((4, 3), (screen_size.0 - 8, 2));
+        let mut frame_time = Duration::default();
         let mut stdout = stdout(); // stdout handle
         clear(&mut stdout);
 
         // play loop
         loop {
-            // render mode, then move to the top corner of the draw area and hide
+            // start frametime timer
+            let dt = Instant::now();
+
+            // render mode display and performance indicator
             queue!(stdout, MoveTo(5, 1))?;
             match self.mode {
                 Mode::Words(_) => {
@@ -97,6 +101,14 @@ impl TestRenderer {
                     )?;
                 }
             }
+            let perf_factor = (frame_time.as_secs_f32() / 0.1) as f32;
+            queue!(
+                stdout,
+                MoveRight(1),
+                Print("".with(color_lerp((0, 255, 0), (255, 0, 0), perf_factor)))
+            )?;
+
+            // move to the top corner of the draw area and hide
             queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;
 
             // render characters
@@ -140,6 +152,7 @@ impl TestRenderer {
                 letters_on_line += 1;
             }
 
+            // wrap content in respect to screen limits
             queue!(stdout, move_to_wrap(self.cursor, screen_limits.1), Show)?;
             if screen_limits.0 .0 > 0 {
                 queue!(stdout, MoveRight(screen_limits.0 .0))?;
@@ -147,6 +160,9 @@ impl TestRenderer {
             if screen_limits.0 .1 > 0 {
                 queue!(stdout, MoveDown(screen_limits.0 .1))?;
             }
+
+            // finished rendering, so flush to terminal
+            frame_time = dt.elapsed();
             stdout.flush()?;
 
             // end condition
