@@ -89,7 +89,7 @@ impl TestRenderer {
                         stdout,
                         Print(
                             format!(
-                                " TIME [ {:.2}s]",
+                                " TIME [ {: ^5.2}s]",
                                 (duration.saturating_sub(
                                     self.timer.unwrap_or(Instant::now()).elapsed()
                                 ))
