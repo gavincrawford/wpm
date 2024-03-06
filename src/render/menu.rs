@@ -22,6 +22,8 @@ pub struct MenuRenderer {
     profile_path: String,
     /// Menu elements.
     menu: Vec<(String, MenuElement)>,
+    /// Active menu. Only applies to menu elements that are rendered in this structure.
+    active_menu: Option<MenuElement>,
 }
 
 /// Represents menu options when rendered.
@@ -29,6 +31,7 @@ pub struct MenuRenderer {
 enum MenuElement {
     Test { wordlist: Wordlist, mode: Mode },
     Profile,
+    Settings,
 }
 
 impl MenuRenderer {
@@ -65,7 +68,8 @@ impl MenuRenderer {
                     mode: Mode::Time(Duration::from_secs(15)),
                 },
             ),
-            ("profile statistics (WIP)", MenuElement::Profile),
+            ("profile statistics", MenuElement::Profile),
+            ("settings", MenuElement::Settings),
         ];
         let menu = menu
             .iter()
@@ -76,6 +80,7 @@ impl MenuRenderer {
             profile,
             profile_path,
             menu,
+            active_menu: None,
         }
     }
 
@@ -117,17 +122,28 @@ impl MenuRenderer {
             }
             queue!(stdout, MoveToNextLine(1))?;
 
-            // render menu elements
-            for (idx, (label, _)) in self.menu.iter().enumerate() {
-                if idx == self.cursor {
-                    queue!(
-                        stdout,
-                        MoveRight(3),
-                        Print(label.clone().black().on_grey()),
-                        MoveToNextLine(1)
-                    )?;
-                } else {
-                    queue!(stdout, MoveRight(2), Print(label), MoveToNextLine(1))?;
+            // render menu elements, based on active menu
+            if let Some(menu) = &self.active_menu {
+                // other menus
+                match menu {
+                    MenuElement::Settings => {
+                        queue!(stdout, Print("SETTINGS TODO"))?; // TODO
+                    }
+                    _ => {}
+                }
+            } else {
+                // main menu
+                for (idx, (label, _)) in self.menu.iter().enumerate() {
+                    if idx == self.cursor {
+                        queue!(
+                            stdout,
+                            MoveRight(3),
+                            Print(label.clone().black().on_grey()),
+                            MoveToNextLine(1)
+                        )?;
+                    } else {
+                        queue!(stdout, MoveRight(2), Print(label), MoveToNextLine(1))?;
+                    }
                 }
             }
 
@@ -175,12 +191,19 @@ impl MenuRenderer {
                 err = match read()? {
                     Key(key) => match key.code {
                         Esc => {
-                            if let Some(profile) = &self.profile {
-                                profile
-                                    .write_to(self.profile_path.clone())
-                                    .expect("Failed to write profile.");
+                            // if the user is in a menu, leave that first
+                            // otherwise, just exit the program itself
+                            if self.active_menu.is_some() {
+                                self.active_menu = None;
+                            } else {
+                                if let Some(profile) = &self.profile {
+                                    profile
+                                        .write_to(self.profile_path.clone())
+                                        .expect("Failed to write profile.");
+                                }
+                                break;
                             }
-                            break;
+                            Ok(())
                         }
                         _ => self.handle_key(key),
                     },
@@ -241,6 +264,9 @@ impl MenuRenderer {
                             if let Some(profile) = &self.profile {
                                 ProfileRenderer::new(&profile).render()?
                             }
+                        }
+                        Settings => {
+                            self.active_menu = Some(MenuElement::Settings);
                         }
                     }
                 }
