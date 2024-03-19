@@ -169,6 +169,7 @@ impl MenuRenderer {
 
             // render main menu stack
             let menus = self.get_menus_from_cursor();
+            let max_possible_cursor = menus.last().unwrap().subitems().unwrap().len();
             let mut this_max_x: usize = 0;
             let mut last_max_x: usize = 0;
             for (depth, menu) in menus.iter().enumerate() {
@@ -253,6 +254,9 @@ impl MenuRenderer {
             // flush
             stdout.flush()?;
 
+            // clamp cursor before handling events that could possibly change it
+            self.clamp_cursor(max_possible_cursor - 1);
+
             // handle events
             if !poll(Duration::from_millis(1000))? {
                 continue;
@@ -280,12 +284,18 @@ impl MenuRenderer {
                     },
                     _ => Ok(()),
                 };
-                // TODO clamp the cursor somewhere
             }
         }
         clear(&mut stdout);
         execute!(stdout, Show)?;
         Ok(())
+    }
+
+    /// Clamps `self` cursor to a maximum of the given value, and a minimum of zero.
+    fn clamp_cursor(&mut self, max: usize) {
+        let mut max = max;
+        let cursor_mut = self.cursor.last_mut().expect("cursor is null");
+        *cursor_mut = *cursor_mut.clamp(&mut 0, &mut max);
     }
 
     /// Handles a keypress.
