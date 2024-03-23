@@ -219,29 +219,6 @@ impl MenuRenderer {
                 }
             }
 
-            // render some simple profile stats
-            if let Some(profile) = &self.profile {
-                let stats = profile.get_stats();
-                queue!(
-                    stdout,
-                    MoveToNextLine(1),
-                    Print(format!(
-                        "|{:^32}| {}",
-                        "total tests taken", stats.total_tests
-                    )),
-                    MoveToNextLine(1),
-                    Print(format!(
-                        "|{:^32}| {:.1}wpm",
-                        "average gross", stats.average_gross_wpm
-                    )),
-                    MoveToNextLine(1),
-                    Print(format!(
-                        "|{:^32}| {:.1}wpm",
-                        "average net", stats.average_net_wpm
-                    )),
-                )?;
-            }
-
             // render errors
             if let Err(ref e) = err {
                 queue!(
@@ -255,6 +232,7 @@ impl MenuRenderer {
             stdout.flush()?;
 
             // clamp cursor before handling events that could possibly change it
+            // TODO fix, fails on last item
             self.clamp_cursor(max_possible_cursor - 1);
 
             // handle events

@@ -79,6 +79,27 @@ impl<'a> ProfileRenderer<'a> {
             .display();
         enable_raw_mode()?;
 
+        // render some simple profile stats
+        let stats = profile.get_stats();
+        queue!(
+            stdout,
+            MoveToNextLine(1),
+            Print(format!(
+                "|{:^32}| {}",
+                "total tests taken", stats.total_tests
+            )),
+            MoveToNextLine(1),
+            Print(format!(
+                "|{:^32}| {:.1}wpm",
+                "average gross", stats.average_gross_wpm
+            )),
+            MoveToNextLine(1),
+            Print(format!(
+                "|{:^32}| {:.1}wpm",
+                "average net", stats.average_net_wpm
+            )),
+        )?;
+
         // add message and flush
         queue!(stdout, Print("Press enter to exit.".italic()))?;
         stdout.flush()?;
