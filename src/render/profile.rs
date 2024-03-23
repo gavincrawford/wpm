@@ -98,6 +98,7 @@ impl<'a> ProfileRenderer<'a> {
                 "|{:^32}| {:.1}wpm",
                 "average net", stats.average_net_wpm
             )),
+            MoveToNextLine(3),
         )?;
 
         // add message and flush
