@@ -185,12 +185,21 @@ impl MenuRenderer {
                         // display each line
                         if depth == menus.len() - 1 {
                             if idx == *self.cursor.last().expect("cursor is null") {
-                                queue!(
-                                    stdout,
-                                    MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                    Print(element.label.clone().black().on_grey()),
-                                    MoveToNextLine(1)
-                                )?;
+                                if element.subitems().is_some() {
+                                    queue!(
+                                        stdout,
+                                        MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
+                                        Print(element.label.clone().dark_green().on_dark_grey()),
+                                        MoveToNextLine(1)
+                                    )?;
+                                } else {
+                                    queue!(
+                                        stdout,
+                                        MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
+                                        Print(element.label.clone().grey().on_dark_grey()),
+                                        MoveToNextLine(1)
+                                    )?;
+                                }
                             } else {
                                 queue!(
                                     stdout,
