@@ -211,6 +211,8 @@ impl TestRenderer {
                     if timer.elapsed() < duration {
                         return Ok(None);
                     }
+                } else {
+                    return Ok(None);
                 }
             }
         }
