@@ -167,11 +167,17 @@ impl MenuRenderer {
             }
             queue!(stdout, MoveToNextLine(1))?;
 
+            // set up variables for rendering
+            let menus = self.get_menus_from_cursor(); // get menus
+            let mut cursor = self.cursor.clone(); // clone cursor so that it renders nicely
+            *cursor.last_mut().unwrap() = *cursor // clamp cursor locally. will update `self`
+                .last()
+                .unwrap()
+                .clamp(&0, &(menus.last().unwrap().subitems().unwrap().len() - 1));
+            let mut this_max_x: usize = 0; // the longest line of any render
+            let mut last_max_x: usize = 0; // the longest line of this render
+
             // render main menu stack
-            let menus = self.get_menus_from_cursor();
-            let max_possible_cursor = menus.last().unwrap().subitems().unwrap().len();
-            let mut this_max_x: usize = 0;
-            let mut last_max_x: usize = 0;
             for (depth, menu) in menus.iter().enumerate() {
                 // for each menu in the stack, print subitems
                 let mut lns = 0;
@@ -184,7 +190,7 @@ impl MenuRenderer {
 
                         // display each line
                         if depth == menus.len() - 1 {
-                            if idx == *self.cursor.last().expect("cursor is null") {
+                            if idx == *cursor.last().expect("cursor is null") {
                                 if element.subitems().is_some() {
                                     queue!(
                                         stdout,
@@ -227,6 +233,7 @@ impl MenuRenderer {
                     queue!(stdout, MoveUp(lns))?;
                 }
             }
+            self.cursor = cursor;
 
             // render errors
             if let Err(ref e) = err {
@@ -239,10 +246,6 @@ impl MenuRenderer {
 
             // flush
             stdout.flush()?;
-
-            // clamp cursor before handling events that could possibly change it
-            // TODO fix, fails on last item
-            self.clamp_cursor(max_possible_cursor - 1);
 
             // handle events
             if !poll(Duration::from_millis(1000))? {
@@ -276,13 +279,6 @@ impl MenuRenderer {
         clear(&mut stdout);
         execute!(stdout, Show)?;
         Ok(())
-    }
-
-    /// Clamps `self` cursor to a maximum of the given value, and a minimum of zero.
-    fn clamp_cursor(&mut self, max: usize) {
-        let mut max = max;
-        let cursor_mut = self.cursor.last_mut().expect("cursor is null");
-        *cursor_mut = *cursor_mut.clamp(&mut 0, &mut max);
     }
 
     /// Handles a keypress.
