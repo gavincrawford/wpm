@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     io::{stdout, Write},
     time::{Duration, Instant},
 };
@@ -20,6 +21,16 @@ use serde_derive::{Deserialize, Serialize};
 pub enum Mode {
     Words(usize),
     Time(Duration),
+}
+
+impl Display for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use Mode::*;
+        match *self {
+            Words(count) => write!(f, "words {}", count),
+            Time(time) => write!(f, "time {}s", time.as_secs()),
+        }
+    }
 }
 
 /// Renders a typing test with the given phrase.

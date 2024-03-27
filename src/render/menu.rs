@@ -31,6 +31,7 @@ pub struct MenuRenderer {
 }
 
 /// Represents menu options and submenus.
+#[derive(Clone)]
 struct MenuElement {
     label: String,
     subitems: Option<Vec<MenuElement>>,
@@ -89,6 +90,20 @@ impl MenuRenderer {
             profile = None;
         }
 
+        // get recent plays
+        let mut recents = vec![];
+        if let Some(profile) = &profile {
+            for entry in profile.get_history().iter().take(5) {
+                recents.push(MenuElement::new_action(
+                    format!("󰕍 {}", entry.mode),
+                    MenuAction::Test {
+                        wordlist: entry.wordlist.clone(),
+                        mode: entry.mode.clone(),
+                    },
+                ))
+            }
+        }
+
         // if no path override is provided, default to `./profile`
         let profile_path = profile_path.unwrap_or(String::from("profile"));
 
@@ -100,30 +115,61 @@ impl MenuRenderer {
             root_menu: MenuElement::new_menu(
                 "root",
                 vec![
-                    MenuElement::new_action(
-                        "words 10",
-                        MenuAction::Test {
-                            wordlist: Wordlist::English1k,
-                            mode: Mode::Words(10),
-                        },
-                    ),
-                    MenuElement::new_action(
-                        "time 10",
-                        MenuAction::Test {
-                            wordlist: Wordlist::English1k,
-                            mode: Mode::Time(Duration::from_secs(10)),
-                        },
+                    MenuElement::new_menu(
+                        "type",
+                        vec![
+                            MenuElement::new_menu(
+                                "words",
+                                vec![
+                                    MenuElement::new_action(
+                                        "words 10",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English1k,
+                                            mode: Mode::Words(10),
+                                        },
+                                    ),
+                                    MenuElement::new_action(
+                                        "words 25",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English1k,
+                                            mode: Mode::Words(25),
+                                        },
+                                    ),
+                                ],
+                            ),
+                            MenuElement::new_menu(
+                                "time",
+                                vec![
+                                    MenuElement::new_action(
+                                        "time 10s",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English1k,
+                                            mode: Mode::Time(Duration::from_secs(10)),
+                                        },
+                                    ),
+                                    MenuElement::new_action(
+                                        "time 30s",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English1k,
+                                            mode: Mode::Time(Duration::from_secs(30)),
+                                        },
+                                    ),
+                                    MenuElement::new_action(
+                                        "time 1m",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English1k,
+                                            mode: Mode::Time(Duration::from_secs(60)),
+                                        },
+                                    ),
+                                ],
+                            ),
+                        ]
+                        .iter() // chain on recent plays in addition to other elements
+                        .chain(&recents)
+                        .cloned()
+                        .collect(),
                     ),
                     MenuElement::new_action("profile", MenuAction::Profile),
-                    // TODO put settings here!!
-                    MenuElement::new_menu(
-                        "test menu",
-                        vec![
-                            MenuElement::new_action("xyz", MenuAction::None),
-                            MenuElement::new_action("xyz", MenuAction::None),
-                            MenuElement::new_action("xyz", MenuAction::None),
-                        ],
-                    ),
                 ],
             ),
         }
