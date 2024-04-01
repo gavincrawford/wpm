@@ -170,6 +170,7 @@ impl MenuRenderer {
                         .collect(),
                     ),
                     MenuElement::new_action("profile", MenuAction::Profile),
+                    MenuElement::new_menu("settings", vec![]),
                 ],
             ),
         }
@@ -219,7 +220,18 @@ impl MenuRenderer {
             *cursor.last_mut().unwrap() = *cursor // clamp cursor locally. will update `self`
                 .last()
                 .unwrap()
-                .clamp(&0, &(menus.last().unwrap().subitems().unwrap().len() - 1));
+                .clamp(
+                    &0,
+                    // prevent the cursor from leaving the subitems of the current menu
+                    &(menus
+                        .last()
+                        .unwrap()
+                        .subitems()
+                        .unwrap()
+                        .len()
+                        .checked_sub(1)
+                        .unwrap_or(0)),
+                );
             let mut this_max_x: usize = 0; // the longest line of any render
             let mut last_max_x: usize = 0; // the longest line of this render
 
