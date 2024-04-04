@@ -1,3 +1,7 @@
+![Stars](https://img.shields.io/github/stars/gavincrawford/wpm?style=for-the-badge)
+![Watchers](https://img.shields.io/github/watchers/gavincrawford/wpm?style=for-the-badge)
+![Forks](https://img.shields.io/github/forks/gavincrawford/wpm?style=for-the-badge)
+
 # WPM
 
 ## Overview
