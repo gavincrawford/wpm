@@ -1,3 +1,6 @@
+mod menu_action;
+mod menu_element;
+
 use std::{
     io::{stdout, Write},
     time::Duration,
@@ -11,6 +14,8 @@ use crossterm::{
     execute, queue,
     style::{Print, Stylize},
 };
+use menu_action::*;
+use menu_element::*;
 
 /// Gap between menu stacks.
 const GAP: usize = 1;
@@ -28,51 +33,6 @@ pub struct MenuRenderer {
     profile_path: String,
     /// Root menu element.
     root_menu: MenuElement,
-}
-
-/// Represents menu options and submenus.
-#[derive(Clone)]
-struct MenuElement {
-    label: String,
-    subitems: Option<Vec<MenuElement>>,
-    action: MenuAction,
-}
-
-impl MenuElement {
-    /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu.
-    pub fn new_menu(label: impl Into<String>, subitems: Vec<MenuElement>) -> Self {
-        Self {
-            label: label.into(),
-            subitems: Some(subitems),
-            action: MenuAction::None,
-        }
-    }
-
-    /// Creates a `MenuElement` that utilizes an action.
-    pub fn new_action(label: impl Into<String>, action: MenuAction) -> Self {
-        Self {
-            label: label.into(),
-            subitems: None,
-            action,
-        }
-    }
-
-    /// Get an immutable reference to the subitems of this element.
-    pub fn subitems(&self) -> Option<&Vec<MenuElement>> {
-        if let Some(elements) = &self.subitems {
-            Some(elements)
-        } else {
-            None
-        }
-    }
-}
-
-/// Represents menu actions, like starting tests or viewing the profile.
-#[derive(Clone)]
-enum MenuAction {
-    Test { wordlist: Wordlist, mode: Mode },
-    Profile,
-    None,
 }
 
 impl MenuRenderer {
@@ -241,9 +201,12 @@ impl MenuRenderer {
                 let mut lns = 0;
                 if let Some(elements) = menu.subitems() {
                     for (idx, element) in elements.iter().enumerate() {
+                        // get label
+                        let label = element.label();
+
                         // update max_x for use later
-                        if element.label.len() > this_max_x {
-                            this_max_x = element.label.len();
+                        if label.len() > this_max_x {
+                            this_max_x = label.len();
                         }
 
                         // display each line
@@ -253,14 +216,14 @@ impl MenuRenderer {
                                     queue!(
                                         stdout,
                                         MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                        Print(element.label.clone().dark_green().on_dark_grey()),
+                                        Print(label.clone().dark_green().on_dark_grey()),
                                         MoveToNextLine(1)
                                     )?;
                                 } else {
                                     queue!(
                                         stdout,
                                         MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                        Print(element.label.clone().grey().on_dark_grey()),
+                                        Print(label.clone().grey().on_dark_grey()),
                                         MoveToNextLine(1)
                                     )?;
                                 }
@@ -268,7 +231,7 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
-                                    Print(element.label.clone()),
+                                    Print(label.clone()),
                                     MoveToNextLine(1)
                                 )?;
                             }
@@ -276,7 +239,7 @@ impl MenuRenderer {
                             queue!(
                                 stdout,
                                 MoveRight(MARGIN as u16 + last_max_x as u16),
-                                Print(element.label.clone().dark_grey()),
+                                Print(label.clone().dark_grey()),
                                 MoveToNextLine(1)
                             )?;
                         }
@@ -363,10 +326,10 @@ impl MenuRenderer {
                     .get(*self.cursor.last().unwrap())
                 {
                     use MenuAction::*;
-                    match &e.action {
+                    match &e.action() {
                         Test { mode, wordlist } => {
                             // get test wordlist information for later
-                            let content = get_wordlist_content(wordlist);
+                            let content = get_wordlist_content(&wordlist);
                             let tokens: Vec<&str> = str_to_tokens(content.as_str());
                             let phrase = match mode {
                                 Mode::Words(length) => tokens_to_phrase(*length, &tokens),
@@ -394,7 +357,7 @@ impl MenuRenderer {
                         }
                         _ => {
                             // if this item is a subitem, open it by pushing a new cursor
-                            if e.subitems.is_some() {
+                            if e.subitems().is_some() {
                                 self.cursor.push(0);
                             }
                         }
