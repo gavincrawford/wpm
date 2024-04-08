@@ -21,22 +21,26 @@ impl MenuElement {
     pub fn new_menu(
         label: impl Into<String>,
         subitems: Vec<MenuElement>,
-        on_render: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
+        update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
     ) -> Self {
         Self {
             label: label.into(),
             subitems: Some(subitems),
-            update_cb: on_render,
+            update_cb,
             action: MenuAction::None,
         }
     }
 
     /// Creates a `MenuElement` that utilizes an action.
-    pub fn new_action(label: impl Into<String>, action: MenuAction) -> Self {
+    pub fn new_action(
+        label: impl Into<String>,
+        action: MenuAction,
+        update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
+    ) -> Self {
         Self {
             label: label.into(),
-            update_cb: None,
             subitems: None,
+            update_cb,
             action,
         }
     }
