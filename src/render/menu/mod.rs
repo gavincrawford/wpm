@@ -3,6 +3,7 @@ mod menu_element;
 
 use std::{
     io::{stdout, Write},
+    rc::Rc,
     time::Duration,
 };
 
@@ -48,20 +49,6 @@ impl MenuRenderer {
             }
         } else {
             profile = None;
-        }
-
-        // get recent plays
-        let mut recents = vec![];
-        if let Some(profile) = &profile {
-            for entry in profile.get_history().iter().rev().take(5) {
-                recents.push(MenuElement::new_action(
-                    format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
-                    MenuAction::Test {
-                        wordlist: entry.wordlist.clone(),
-                        mode: entry.mode.clone(),
-                    },
-                ))
-            }
         }
 
         // if no path override is provided, default to `./profile`
@@ -110,6 +97,7 @@ impl MenuRenderer {
                                         },
                                     ),
                                 ],
+                                None,
                             ),
                             MenuElement::new_menu(
                                 "time",
@@ -136,16 +124,36 @@ impl MenuRenderer {
                                         },
                                     ),
                                 ],
+                                None,
                             ),
-                        ]
-                        .iter() // chain on recent plays in addition to other elements
-                        .chain(&recents)
-                        .cloned()
-                        .collect(),
+                        ],
+                        Some(Rc::new(|profile, element| {
+                            // get recent plays
+                            let mut recents = vec![];
+                            if let Some(profile) = profile {
+                                for entry in profile.get_history().iter().rev().take(5) {
+                                    recents.push(MenuElement::new_action(
+                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
+                                        MenuAction::Test {
+                                            wordlist: entry.wordlist.clone(),
+                                            mode: entry.mode.clone(),
+                                        },
+                                    ))
+                                }
+                            }
+
+                            // remove old subitems
+                            let subitems = element.subitems_mut().unwrap(); // safe unwrap
+                            subitems.retain(|v| v.subitems().is_some());
+                            for element in recents {
+                                subitems.push(element);
+                            }
+                        })),
                     ),
                     MenuElement::new_action("profile", MenuAction::Profile),
-                    MenuElement::new_menu("settings", vec![]),
+                    MenuElement::new_menu("settings", vec![], None),
                 ],
+                None,
             ),
         }
     }
@@ -161,6 +169,9 @@ impl MenuRenderer {
         let mut stdout = stdout();
         let mut err: Result<(), std::io::Error> = Ok(());
         loop {
+            // execute update callbacks
+            self.execute_all_update_cb()?;
+
             // print label and profile notification
             clear(&mut stdout);
             queue!(
@@ -380,6 +391,11 @@ impl MenuRenderer {
             }
             _ => {}
         }
+
+        // execute update callbacks for menu items that may have changed after whatever action this
+        // keypress may have executed. executes ALL callbacks from the root downwards
+        self.execute_all_update_cb()?;
+
         Ok(())
     }
 
@@ -405,5 +421,10 @@ impl MenuRenderer {
 
         // done
         menus
+    }
+
+    /// Recursively executes all available update callbacks.
+    fn execute_all_update_cb(&mut self) -> Result<(), std::io::Error> {
+        self.root_menu.execute_update_cb(&self.profile)
     }
 }
