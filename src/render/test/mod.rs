@@ -1,12 +1,13 @@
+mod letter;
+mod mode;
+
 use std::{
-    fmt::Display,
     io::{stdout, Write},
     time::{Duration, Instant},
 };
 
-use crate::profile::TestResult;
-
 use super::{util::*, wordlist::Wordlist};
+use crate::profile::TestResult;
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -14,24 +15,8 @@ use crossterm::{
     style::{Print, Stylize},
     terminal::size,
 };
-use serde_derive::{Deserialize, Serialize};
-
-/// Mode enumerator, represents which mode a test is in.
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum Mode {
-    Words(usize),
-    Time(Duration),
-}
-
-impl Display for Mode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Mode::*;
-        match *self {
-            Words(count) => write!(f, "words {}", count),
-            Time(time) => write!(f, "time {}s", time.as_secs()),
-        }
-    }
-}
+pub use letter::*;
+pub use mode::*;
 
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
@@ -47,15 +32,6 @@ pub struct TestRenderer {
     timer: Option<Instant>,
     /// Cursor position.
     cursor: usize,
-}
-
-/// Represents a single letter within the phrase. Each letter is either a `Char`, which is an
-/// untyped character, a `Hit`, which is a correct character, and a `Miss`, which is an incorrect
-/// character.
-enum Letter {
-    Char(char),
-    Hit(char),
-    Miss(char),
 }
 
 impl TestRenderer {
