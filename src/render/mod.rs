@@ -18,7 +18,7 @@ pub mod wordlist {
     pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
 
     /// Wordlist enumerator, which represents wordlists without carrying around all the weight.
-    #[derive(Clone, Serialize, Deserialize)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub enum Wordlist {
         English1k,
         English10k,

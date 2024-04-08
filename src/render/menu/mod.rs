@@ -55,7 +55,7 @@ impl MenuRenderer {
         if let Some(profile) = &profile {
             for entry in profile.get_history().iter().take(5) {
                 recents.push(MenuElement::new_action(
-                    format!("󰕍 {}", entry.mode),
+                    format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                     MenuAction::Test {
                         wordlist: entry.wordlist.clone(),
                         mode: entry.mode.clone(),
@@ -82,16 +82,30 @@ impl MenuRenderer {
                                 "words",
                                 vec![
                                     MenuElement::new_action(
-                                        "words 10",
+                                        "easy words 10",
                                         MenuAction::Test {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Words(10),
                                         },
                                     ),
                                     MenuElement::new_action(
-                                        "words 25",
+                                        "easy words 25",
                                         MenuAction::Test {
                                             wordlist: Wordlist::English1k,
+                                            mode: Mode::Words(25),
+                                        },
+                                    ),
+                                    MenuElement::new_action(
+                                        "hard words 10",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English10k,
+                                            mode: Mode::Words(10),
+                                        },
+                                    ),
+                                    MenuElement::new_action(
+                                        "hard words 25",
+                                        MenuAction::Test {
+                                            wordlist: Wordlist::English10k,
                                             mode: Mode::Words(25),
                                         },
                                     ),
