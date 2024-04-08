@@ -53,7 +53,7 @@ impl MenuRenderer {
         // get recent plays
         let mut recents = vec![];
         if let Some(profile) = &profile {
-            for entry in profile.get_history().iter().take(5) {
+            for entry in profile.get_history().iter().rev().take(5) {
                 recents.push(MenuElement::new_action(
                     format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                     MenuAction::Test {
