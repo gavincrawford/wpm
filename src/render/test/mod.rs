@@ -18,6 +18,15 @@ use crossterm::{
 pub use letter::*;
 pub use mode::*;
 
+/// Base X padding for the UI.
+const PAD_X: u16 = 4;
+
+/// Base Y padding for the UI.
+const PAD_Y: u16 = 1;
+
+/// Limit of lines on the screen at a time.
+const LINE_LIMIT: u16 = 2;
+
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
     /// Wordlist used.
@@ -55,7 +64,10 @@ impl TestRenderer {
     pub fn render(&mut self) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
-        let screen_limits = ((4, 3), (screen_size.0 - 8, 2));
+        let screen_limits = (
+            (PAD_X, PAD_Y + 2),
+            (screen_size.0 - (PAD_X * 2), LINE_LIMIT),
+        );
         let mut frame_time = Duration::default();
         let mut stdout = stdout(); // stdout handle
         clear(&mut stdout);
@@ -66,7 +78,7 @@ impl TestRenderer {
             let dt = Instant::now();
 
             // render mode display and performance indicator
-            queue!(stdout, MoveTo(5, 1))?;
+            queue!(stdout, MoveTo(PAD_X + 1, PAD_Y))?;
             match self.mode {
                 Mode::Words(_) => {
                     queue!(stdout, Print(" WORDS".on_dark_magenta().white()))?;
