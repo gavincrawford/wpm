@@ -17,8 +17,9 @@ pub struct MenuElement {
 }
 
 impl MenuElement {
-    /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu.
-    pub fn new_menu(
+    /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu. Uses
+    /// an update callback.
+    pub fn new_menu_cb(
         label: impl Into<String>,
         subitems: Vec<MenuElement>,
         update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
@@ -31,8 +32,8 @@ impl MenuElement {
         }
     }
 
-    /// Creates a `MenuElement` that utilizes an action.
-    pub fn new_action(
+    /// Creates a `MenuElement` that utilizes an action. Uses an update callback.
+    pub fn new_action_cb(
         label: impl Into<String>,
         action: MenuAction,
         update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
@@ -41,6 +42,26 @@ impl MenuElement {
             label: label.into(),
             subitems: None,
             update_cb,
+            action,
+        }
+    }
+
+    /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu.
+    pub fn new_menu(label: impl Into<String>, subitems: Vec<MenuElement>) -> Self {
+        Self {
+            label: label.into(),
+            subitems: Some(subitems),
+            update_cb: None,
+            action: MenuAction::None,
+        }
+    }
+
+    /// Creates a `MenuElement` that utilizes an action.
+    pub fn new_action(label: impl Into<String>, action: MenuAction) -> Self {
+        Self {
+            label: label.into(),
+            subitems: None,
+            update_cb: None,
             action,
         }
     }

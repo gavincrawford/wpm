@@ -62,7 +62,7 @@ impl MenuRenderer {
             root_menu: MenuElement::new_menu(
                 "root",
                 vec![
-                    MenuElement::new_menu(
+                    MenuElement::new_menu_cb(
                         "type",
                         vec![
                             // words
@@ -75,7 +75,6 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Words(10),
                                         },
-                                        None,
                                     ),
                                     MenuElement::new_action(
                                         "easy words 25",
@@ -83,7 +82,6 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Words(25),
                                         },
-                                        None,
                                     ),
                                     MenuElement::new_action(
                                         "hard words 10",
@@ -91,7 +89,6 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English10k,
                                             mode: Mode::Words(10),
                                         },
-                                        None,
                                     ),
                                     MenuElement::new_action(
                                         "hard words 25",
@@ -99,10 +96,8 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English10k,
                                             mode: Mode::Words(25),
                                         },
-                                        None,
                                     ),
                                 ],
-                                None,
                             ),
                             // time
                             MenuElement::new_menu(
@@ -114,7 +109,6 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Time(Duration::from_secs(10)),
                                         },
-                                        None,
                                     ),
                                     MenuElement::new_action(
                                         "time 30s",
@@ -122,7 +116,6 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Time(Duration::from_secs(30)),
                                         },
-                                        None,
                                     ),
                                     MenuElement::new_action(
                                         "time 1m",
@@ -130,10 +123,8 @@ impl MenuRenderer {
                                             wordlist: Wordlist::English1k,
                                             mode: Mode::Time(Duration::from_secs(60)),
                                         },
-                                        None,
                                     ),
                                 ],
-                                None,
                             ),
                         ],
                         // recents updater
@@ -142,7 +133,7 @@ impl MenuRenderer {
                             let mut recents = vec![];
                             if let Some(profile) = profile {
                                 for entry in profile.get_history().iter().rev().take(5) {
-                                    recents.push(MenuElement::new_action(
+                                    recents.push(MenuElement::new_action_cb(
                                         format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         MenuAction::Test {
                                             wordlist: entry.wordlist.clone(),
@@ -162,11 +153,10 @@ impl MenuRenderer {
                         })),
                     ),
                     // profile statistics
-                    MenuElement::new_action("profile", MenuAction::Profile, None),
+                    MenuElement::new_action("profile", MenuAction::Profile),
                     // settings
-                    MenuElement::new_menu("settings", vec![], None),
+                    MenuElement::new_menu("settings", vec![]),
                 ],
-                None,
             ),
         }
     }
