@@ -55,6 +55,8 @@ impl MenuRenderer {
         let profile_path = profile_path.unwrap_or(String::from("profile"));
 
         // make menu items
+        use Mode::*;
+        use Wordlist::*;
         Self {
             cursor: vec![0],
             profile,
@@ -72,29 +74,29 @@ impl MenuRenderer {
                                     MenuElement::new_action(
                                         "easy words 10",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English1k,
-                                            mode: Mode::Words(10),
+                                            wordlist: English1k,
+                                            mode: Words(10),
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "easy words 25",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English1k,
-                                            mode: Mode::Words(25),
+                                            wordlist: English1k,
+                                            mode: Words(25),
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "hard words 10",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English10k,
-                                            mode: Mode::Words(10),
+                                            wordlist: English10k,
+                                            mode: Words(10),
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "hard words 25",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English10k,
-                                            mode: Mode::Words(25),
+                                            wordlist: English10k,
+                                            mode: Words(25),
                                         },
                                     ),
                                 ],
@@ -106,22 +108,22 @@ impl MenuRenderer {
                                     MenuElement::new_action(
                                         "time 10s",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English1k,
-                                            mode: Mode::Time(Duration::from_secs(10)),
+                                            wordlist: English1k,
+                                            mode: Time(Duration::from_secs(10)),
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "time 30s",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English1k,
-                                            mode: Mode::Time(Duration::from_secs(30)),
+                                            wordlist: English1k,
+                                            mode: Time(Duration::from_secs(30)),
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "time 1m",
                                         MenuAction::Test {
-                                            wordlist: Wordlist::English1k,
-                                            mode: Mode::Time(Duration::from_secs(60)),
+                                            wordlist: English1k,
+                                            mode: Time(Duration::from_secs(60)),
                                         },
                                     ),
                                 ],
