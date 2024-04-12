@@ -98,6 +98,8 @@ impl<'a> ProfileRenderer<'a> {
                 "|{:^32}| {:.1}wpm",
                 "average net", stats.average_net_wpm
             )),
+            MoveToNextLine(1),
+            Print(format!("|{:^32}| {:.1}wpm", "personal best", stats.pb)),
             MoveToNextLine(3),
         )?;
 

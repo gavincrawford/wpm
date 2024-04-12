@@ -347,52 +347,7 @@ impl MenuRenderer {
                 }
             }
             Enter => {
-                if let Some(e) = self
-                    .get_menus_from_cursor()
-                    .last()
-                    .unwrap()
-                    .subitems()
-                    .unwrap()
-                    .get(*self.cursor.last().unwrap())
-                {
-                    use MenuAction::*;
-                    match &e.action() {
-                        Test { mode, wordlist } => {
-                            // get test wordlist information for later
-                            let content = get_wordlist_content(&wordlist);
-                            let tokens: Vec<&str> = str_to_tokens(content.as_str());
-                            let phrase = match mode {
-                                Mode::Words(length) => tokens_to_phrase(*length, &tokens),
-                                Mode::Time(_) => tokens_to_phrase(100, &tokens),
-                            };
-                            let result =
-                                TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
-                                    .render()?;
-
-                            // if user abandoned test, we're done here
-                            if result.is_none() {
-                                return Ok(());
-                            }
-
-                            // otherwise, add test record to profile
-                            if let Some(profile) = self.profile.as_mut() {
-                                profile.record(result.unwrap());
-                                profile.update_stats();
-                            }
-                        }
-                        Profile => {
-                            if let Some(profile) = &self.profile {
-                                ProfileRenderer::new(&profile).render()?
-                            }
-                        }
-                        _ => {
-                            // if this item is a subitem, open it by pushing a new cursor
-                            if e.subitems().is_some() {
-                                self.cursor.push(0);
-                            }
-                        }
-                    }
-                }
+                self.select_at_cursor()?;
             }
             _ => {}
         }
@@ -402,6 +357,90 @@ impl MenuRenderer {
         self.execute_all_update_cb()?;
 
         Ok(())
+    }
+
+    /// Processes a selection at the current cursor position stored within `self`. This function
+    /// processes things like menu navigation, starting typing sessions, and opening views.
+    fn select_at_cursor(&mut self) -> Result<(), std::io::Error> {
+        Ok(
+            if let Some(e) = self
+                .get_menus_from_cursor()
+                .last()
+                .unwrap()
+                .subitems()
+                .unwrap()
+                .get(*self.cursor.last().unwrap())
+            {
+                use MenuAction::*;
+                match &e.action() {
+                    Test { mode, wordlist } => {
+                        // get test wordlist information for later
+                        let content = get_wordlist_content(&wordlist);
+                        let tokens: Vec<&str> = str_to_tokens(content.as_str());
+                        let phrase = match mode {
+                            Mode::Words(length) => tokens_to_phrase(*length, &tokens),
+                            Mode::Time(_) => tokens_to_phrase(100, &tokens),
+                        };
+                        let result = TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
+                            .render()?;
+
+                        // if user abandoned test, we're done here
+                        if result.is_none() {
+                            return Ok(());
+                        }
+
+                        // temporarily show results before continuing
+                        let result = result.unwrap(); // safety above
+                        let mut stdout = stdout();
+                        queue!(
+                            // basic initial stats
+                            stdout,
+                            Print(format!("GROSS: {:.2} wpm", result.wpm.0)),
+                            MoveToNextLine(1),
+                            Print(format!(
+                                "NET:   {:.2}wpm ({}X)",
+                                result.wpm.1, result.misses,
+                            )),
+                            MoveToNextLine(1),
+                        )?;
+                        if let Some(profile) = &self.profile {
+                            if result.wpm.0 > profile.get_stats().pb {
+                                queue!(
+                                    stdout,
+                                    Print(format!("{} {}", "".yellow(), "new pb!".italic())),
+                                    MoveToNextLine(1),
+                                )?;
+                            }
+                        }
+                        queue!(
+                            // continue message
+                            stdout,
+                            MoveToNextLine(1),
+                            Print("Press enter to continue.".italic())
+                        )?;
+                        stdout.flush()?;
+                        wait_until_enter(Some(Duration::from_secs(10)));
+
+                        // otherwise, add test record to profile
+                        if let Some(profile) = self.profile.as_mut() {
+                            profile.record(result);
+                            profile.update_stats();
+                        }
+                    }
+                    Profile => {
+                        if let Some(profile) = &self.profile {
+                            ProfileRenderer::new(&profile).render()?
+                        }
+                    }
+                    _ => {
+                        // if this item is a subitem, open it by pushing a new cursor
+                        if e.subitems().is_some() {
+                            self.cursor.push(0);
+                        }
+                    }
+                }
+            },
+        )
     }
 
     /// Get menus from cursor position.

@@ -51,6 +51,8 @@ pub struct ProfileStatistics {
     pub average_gross_wpm: f32,
     /// Average net WPM.
     pub average_net_wpm: f32,
+    /// Personal best gross WPM.
+    pub pb: f32,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -77,19 +79,28 @@ impl Profile {
         // total tests
         self.stats.total_tests = self.history.len() as u64;
 
-        // average wpms
+        // average wpms and get pb
         if self.stats.total_tests == 0 {
             self.stats.average_gross_wpm = 0.;
             self.stats.average_net_wpm = 0.;
+            self.stats.pb = 0.;
         } else {
             let mut gross_sum = 0.;
             let mut net_sum = 0.;
+            let mut max_wpm = 0.;
             for test in &self.history {
+                // add to averages
                 gross_sum += test.wpm.0;
                 net_sum += test.wpm.1;
+
+                // get pb
+                if test.wpm.0 > max_wpm {
+                    max_wpm = test.wpm.0;
+                }
             }
             self.stats.average_gross_wpm = gross_sum / self.stats.total_tests as f32;
             self.stats.average_net_wpm = net_sum / self.stats.total_tests as f32;
+            self.stats.pb = max_wpm;
         }
     }
 

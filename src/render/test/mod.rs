@@ -9,7 +9,7 @@ use std::{
 use super::{util::*, wordlist::Wordlist};
 use crate::profile::TestResult;
 use crossterm::{
-    cursor::{Hide, MoveDown, MoveRight, MoveTo, MoveToNextLine, Show},
+    cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
     style::{Print, Stylize},
@@ -239,19 +239,6 @@ impl TestRenderer {
             timer.elapsed(),
             wpm,
         );
-
-        // display test stuff
-        execute!(
-            stdout,
-            Print(format!("GROSS: {:.2} wpm", wpm.0)),
-            MoveToNextLine(1),
-            Print(format!("NET:   {:.2}wpm ({}X)", wpm.1, self.count_misses())),
-            MoveToNextLine(2),
-            Print("Press enter to continue.".italic())
-        )?;
-
-        // wait until enter is pressed, then return test result
-        wait_until_enter(Some(Duration::from_secs(10)));
         Ok(Some(result))
     }
 
