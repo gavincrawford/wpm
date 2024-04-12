@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{test::*, util::*, wordlist::*};
-use crate::{profile::Profile, render::profile::ProfileRenderer};
+use crate::{profile::Profile, render::profile_stats::ProfileRenderer};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},

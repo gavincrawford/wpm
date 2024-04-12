@@ -2,7 +2,7 @@
 pub mod menu;
 
 /// Profile statistics renderer.
-pub mod profile;
+pub mod profile_stats;
 
 /// Test renderer.
 pub mod test;
