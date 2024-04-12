@@ -93,8 +93,8 @@ impl Profile {
                 gross_sum += test.wpm.0;
                 net_sum += test.wpm.1;
 
-                // get pb
-                if test.wpm.0 > max_wpm {
+                // get pb from net, meaning including errors
+                if test.wpm.1 > max_wpm {
                     max_wpm = test.wpm.0;
                 }
             }

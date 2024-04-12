@@ -404,7 +404,7 @@ impl MenuRenderer {
                             MoveToNextLine(1),
                         )?;
                         if let Some(profile) = &self.profile {
-                            if result.wpm.0 > profile.get_stats().pb {
+                            if result.wpm.1 > profile.get_stats().pb {
                                 queue!(
                                     stdout,
                                     Print(format!("{} {}", "".yellow(), "new pb!".italic())),
