@@ -48,9 +48,18 @@ impl Config {
             panic!("get_bool called on non-boolean configuration item");
         }
     }
+
+    /// Set the given key to the given value.
+    pub fn set(&mut self, key: impl Into<String>, value: impl Into<ConfigValue>) {
+        let key = key.into();
+        let value = value.into();
+        self.map
+            .insert(key.clone(), value.clone())
+            .expect(format!("failed to set config value '{}' to '{:?}'", key, value).as_str());
+    }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ConfigValue {
     Bool(bool),
     Color { r: u8, g: u8, b: u8 },

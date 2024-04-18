@@ -8,7 +8,7 @@ use std::{
 };
 
 use super::{test::*, util::*, wordlist::*};
-use crate::{profile::Profile, render::profile_stats::ProfileRenderer};
+use crate::{config::ConfigValue, profile::Profile, render::profile_stats::ProfileRenderer};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -57,13 +57,6 @@ impl MenuRenderer {
 
         // if no path override is provided, default to `./profile`
         let profile_path = profile_path.unwrap_or(String::from("profile"));
-
-        // get settings items
-        // TODO implement interactions with these from this menu
-        let mut settings = vec![];
-        for value in profile.get_config().map.keys() {
-            settings.push(MenuElement::new_action(value, MenuAction::None))
-        }
 
         // make menu items
         use Mode::*;
@@ -167,7 +160,22 @@ impl MenuRenderer {
                     // profile statistics
                     MenuElement::new_action("profile", MenuAction::Profile),
                     // settings
-                    MenuElement::new_menu("settings", settings),
+                    MenuElement::new_menu_cb(
+                        "settings",
+                        vec![],
+                        Some(Rc::new(|profile, element| {
+                            // get settings items
+                            let mut settings = vec![];
+                            for value in profile.get_config().map.keys() {
+                                settings.push(MenuElement::new_action(
+                                    // TODO make this formatter pretty
+                                    format!("{} ({:?})", value, profile.get_config().get(value)),
+                                    MenuAction::CfgToggle(value.to_owned()),
+                                ))
+                            }
+                            *element.subitems_mut().unwrap() = settings;
+                        })),
+                    ),
                 ],
             ),
         }
@@ -432,6 +440,12 @@ impl MenuRenderer {
                         self.profile.update_stats();
                     }
                     Profile => ProfileRenderer::new(&self.profile).render()?,
+                    CfgToggle(v) => {
+                        // TODO horrible. clones twice
+                        let v = v.to_owned();
+                        let cfg = self.profile.get_config_mut();
+                        cfg.set(v.clone(), ConfigValue::Bool(!cfg.get_bool(v.clone())));
+                    }
                     _ => {
                         // if this item is a subitem, open it by pushing a new cursor
                         if e.subitems().is_some() {

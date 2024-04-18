@@ -74,6 +74,11 @@ impl Profile {
         &self.config
     }
 
+    /// Get an mutable snapshot of this profile's configuration.
+    pub fn get_config_mut(&mut self) -> &mut Config {
+        &mut self.config
+    }
+
     /// Get an immutable snapshot of this profile's statistics.
     pub fn get_stats(&self) -> &ProfileStatistics {
         &self.stats
