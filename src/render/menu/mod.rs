@@ -29,35 +29,47 @@ pub struct MenuRenderer {
     /// Selected menu option for each menu currently open.
     cursor: Vec<usize>,
     /// Active profile.
-    profile: Option<Profile>,
+    profile: Profile,
     /// Profile path. If not overridden, it will default to "profile".
     profile_path: String,
     /// Root menu element.
     root_menu: MenuElement,
+    /// True when profile will be saved, false otherwise. Mostly used for testing.
+    save: bool,
 }
 
 impl MenuRenderer {
     pub fn new(profile_path: Option<String>) -> Self {
         // open profile
         let profile;
+        let mut save = false;
         if let Some(profile_path) = &profile_path {
             // if profile exists, get it. otherwise, make a default one
             if let Ok(profile_from_data) = Profile::read_from(profile_path) {
-                profile = Some(profile_from_data);
+                profile = profile_from_data;
             } else {
-                profile = Some(Profile::default());
+                profile = Profile::default();
             }
+            save = true;
         } else {
-            profile = None;
+            profile = Profile::default();
         }
 
         // if no path override is provided, default to `./profile`
         let profile_path = profile_path.unwrap_or(String::from("profile"));
 
+        // get settings items
+        // TODO implement interactions with these from this menu
+        let mut settings = vec![];
+        for value in profile.get_config().map.keys() {
+            settings.push(MenuElement::new_action(value, MenuAction::None))
+        }
+
         // make menu items
         use Mode::*;
         use Wordlist::*;
         Self {
+            save,
             cursor: vec![0],
             profile,
             profile_path,
@@ -133,17 +145,15 @@ impl MenuRenderer {
                         Some(Rc::new(|profile, element| {
                             // get recent plays
                             let mut recents = vec![];
-                            if let Some(profile) = profile {
-                                for entry in profile.get_history().iter().rev().take(5) {
-                                    recents.push(MenuElement::new_action_cb(
-                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
-                                        MenuAction::Test {
-                                            wordlist: entry.wordlist.clone(),
-                                            mode: entry.mode.clone(),
-                                        },
-                                        None,
-                                    ))
-                                }
+                            for entry in profile.get_history().iter().rev().take(5) {
+                                recents.push(MenuElement::new_action_cb(
+                                    format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
+                                    MenuAction::Test {
+                                        wordlist: entry.wordlist.clone(),
+                                        mode: entry.mode.clone(),
+                                    },
+                                    None,
+                                ))
                             }
 
                             // remove old subitems
@@ -157,7 +167,7 @@ impl MenuRenderer {
                     // profile statistics
                     MenuElement::new_action("profile", MenuAction::Profile),
                     // settings
-                    MenuElement::new_menu("settings", vec![]),
+                    MenuElement::new_menu("settings", settings),
                 ],
             ),
         }
@@ -166,9 +176,7 @@ impl MenuRenderer {
     /// Renders the menu util exited or a test is started.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // update profile stats, just in case
-        if let Some(profile) = self.profile.as_mut() {
-            profile.update_stats();
-        }
+        self.profile.update_stats();
 
         // get stdout handle
         let mut stdout = stdout();
@@ -185,7 +193,7 @@ impl MenuRenderer {
                 MoveTo(0, 0),
                 Print("WPM".on_dark_grey().grey()),
             )?;
-            if self.profile.is_none() {
+            if !self.save {
                 queue!(
                     stdout,
                     MoveRight(1),
@@ -312,8 +320,8 @@ impl MenuRenderer {
                             if self.cursor.len() > 1 {
                                 self.cursor.pop();
                             } else {
-                                if let Some(profile) = &self.profile {
-                                    profile
+                                if self.save {
+                                    self.profile
                                         .write_to(self.profile_path.clone())
                                         .expect("Failed to write profile.");
                                 }
@@ -382,7 +390,7 @@ impl MenuRenderer {
                             Mode::Time(_) => tokens_to_phrase(100, &tokens),
                         };
                         let result = TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
-                            .render()?;
+                            .render(self.profile.get_config())?;
 
                         // if user abandoned test, we're done here
                         if result.is_none() {
@@ -403,14 +411,12 @@ impl MenuRenderer {
                             )),
                             MoveToNextLine(1),
                         )?;
-                        if let Some(profile) = &self.profile {
-                            if result.wpm.1 > profile.get_stats().pb {
-                                queue!(
-                                    stdout,
-                                    Print(format!("{} {}", "".yellow(), "new pb!".italic())),
-                                    MoveToNextLine(1),
-                                )?;
-                            }
+                        if result.wpm.1 > self.profile.get_stats().pb {
+                            queue!(
+                                stdout,
+                                Print(format!("{} {}", "".yellow(), "new pb!".italic())),
+                                MoveToNextLine(1),
+                            )?;
                         }
                         queue!(
                             // continue message
@@ -422,16 +428,10 @@ impl MenuRenderer {
                         wait_until_enter(Some(Duration::from_secs(10)));
 
                         // otherwise, add test record to profile
-                        if let Some(profile) = self.profile.as_mut() {
-                            profile.record(result);
-                            profile.update_stats();
-                        }
+                        self.profile.record(result);
+                        self.profile.update_stats();
                     }
-                    Profile => {
-                        if let Some(profile) = &self.profile {
-                            ProfileRenderer::new(&profile).render()?
-                        }
-                    }
+                    Profile => ProfileRenderer::new(&self.profile).render()?,
                     _ => {
                         // if this item is a subitem, open it by pushing a new cursor
                         if e.subitems().is_some() {

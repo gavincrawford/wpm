@@ -1,6 +1,9 @@
 use std::{fs::File, time::Duration};
 
-use crate::render::{test::Mode, wordlist::Wordlist};
+use crate::{
+    config::Config,
+    render::{test::Mode, wordlist::Wordlist},
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -61,9 +64,16 @@ pub struct Profile {
     history: Vec<TestResult>,
     /// Statistics.
     stats: ProfileStatistics,
+    /// Current configuration.
+    config: Config,
 }
 
 impl Profile {
+    /// Get an immutable snapshot of this profile's configuration.
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
+
     /// Get an immutable snapshot of this profile's statistics.
     pub fn get_stats(&self) -> &ProfileStatistics {
         &self.stats

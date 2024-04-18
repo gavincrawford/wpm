@@ -7,7 +7,7 @@ use std::{
 };
 
 use super::{util::*, wordlist::Wordlist};
-use crate::profile::TestResult;
+use crate::{config::Config, profile::TestResult};
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -61,7 +61,7 @@ impl TestRenderer {
 
     /// Starts and runs the test until completed. Uses key handlers and other supporting functions to
     /// work as intended.
-    pub fn render(&mut self) -> Result<Option<TestResult>, std::io::Error> {
+    pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         let screen_size = size()?; // does NOT live update
         let screen_limits = (
@@ -100,12 +100,14 @@ impl TestRenderer {
                     )?;
                 }
             }
-            let perf_factor = (frame_time.as_secs_f32() / 0.1) as f32;
-            queue!(
-                stdout,
-                MoveRight(1),
-                Print("".with(color_lerp((0, 255, 0), (255, 0, 0), perf_factor)))
-            )?;
+            if config.get_bool("show performance indicator") {
+                let perf_factor = (frame_time.as_secs_f32() / 0.1) as f32;
+                queue!(
+                    stdout,
+                    MoveRight(1),
+                    Print("".with(color_lerp((0, 255, 0), (255, 0, 0), perf_factor)))
+                )?;
+            }
 
             // move to the top corner of the draw area and hide
             queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;

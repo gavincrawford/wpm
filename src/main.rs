@@ -7,6 +7,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 
+mod config;
 mod profile;
 mod render;
 

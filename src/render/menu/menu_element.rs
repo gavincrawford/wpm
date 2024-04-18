@@ -11,7 +11,7 @@ pub struct MenuElement {
     /// Element update callback. Used to update data if needed. More arguments could be used if
     /// required for further functionality than recent plays, which is what this feature was
     /// intended for.
-    update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
+    update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
     /// Element action, if this is an action.
     action: MenuAction,
 }
@@ -22,7 +22,7 @@ impl MenuElement {
     pub fn new_menu_cb(
         label: impl Into<String>,
         subitems: Vec<MenuElement>,
-        update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
+        update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
     ) -> Self {
         Self {
             label: label.into(),
@@ -36,7 +36,7 @@ impl MenuElement {
     pub fn new_action_cb(
         label: impl Into<String>,
         action: MenuAction,
-        update_cb: Option<Rc<dyn Fn(&Option<Profile>, &mut Self)>>,
+        update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
     ) -> Self {
         Self {
             label: label.into(),
@@ -68,7 +68,7 @@ impl MenuElement {
 
     /// Execute on-render callback for this element.
     /// Running an update callback will recursively update all children.
-    pub fn execute_update_cb(&mut self, profile: &Option<Profile>) -> Result<(), std::io::Error> {
+    pub fn execute_update_cb(&mut self, profile: &Profile) -> Result<(), std::io::Error> {
         // update all children
         if let Some(subitems) = &mut self.subitems {
             subitems.iter_mut().for_each(|element| {
