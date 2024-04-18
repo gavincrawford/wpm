@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crossterm::style::Stylize;
 use serde_derive::{Deserialize, Serialize};
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
@@ -17,6 +16,14 @@ impl Default for Config {
         vec![
             ("show performance indicator".into(), Bool(true)),
             ("show recent tests".into(), Bool(true)),
+            (
+                "recent test count".into(),
+                Integer {
+                    v: 5,
+                    max: 10,
+                    min: 0,
+                },
+            ),
         ]
         .iter()
         .for_each(|cfg_val: &(String, ConfigValue)| {
@@ -49,6 +56,20 @@ impl Config {
         }
     }
 
+    /// Get config values by key, integer only. Will panic if called on other variants.
+    pub fn get_int(&self, key: impl Into<String>) -> i32 {
+        let key = key.into();
+        if let ConfigValue::Integer { v, max: _, min: _ } = self
+            .map
+            .get(&key)
+            .expect(format!("no element '{}' found in configuration map", key).as_str())
+        {
+            v.to_owned()
+        } else {
+            panic!("get_int called on non-integer configuration item");
+        }
+    }
+
     /// Set the given key to the given value.
     pub fn set(&mut self, key: impl Into<String>, value: impl Into<ConfigValue>) {
         let key = key.into();
@@ -62,7 +83,7 @@ impl Config {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ConfigValue {
     Bool(bool),
-    Color { r: u8, g: u8, b: u8 },
+    Integer { v: i32, max: i32, min: i32 },
 }
 
 impl Display for ConfigValue {
@@ -70,11 +91,7 @@ impl Display for ConfigValue {
         use ConfigValue::*;
         match *self {
             Bool(v) => write!(f, "{}", v),
-            Color { r, g, b } => write!(
-                f,
-                "{}",
-                format!("{r},{g},{b}").on(crossterm::style::Color::Rgb { r, g, b })
-            ),
+            Integer { v, max: _, min: _ } => write!(f, "{}", v),
         }
     }
 }

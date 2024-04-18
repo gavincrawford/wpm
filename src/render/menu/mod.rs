@@ -144,7 +144,14 @@ impl MenuRenderer {
                             if profile.get_config().get_bool("show recent tests") {
                                 // get recent plays
                                 let mut recents = vec![];
-                                for entry in profile.get_history().iter().rev().take(5) {
+                                for entry in
+                                    profile
+                                        .get_history()
+                                        .iter()
+                                        .rev()
+                                        .take(profile.get_config().get_int("recent test count")
+                                            as usize)
+                                {
                                     recents.push(MenuElement::new_action_cb(
                                         format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         MenuAction::Test {
@@ -171,10 +178,19 @@ impl MenuRenderer {
                         Some(Rc::new(|profile, element| {
                             // get settings items
                             let mut settings = vec![];
-                            for value in profile.get_config().map.keys() {
+                            for (key, value) in profile.get_config().map.iter() {
+                                use ConfigValue::*;
+                                let action = match *value {
+                                    Bool(_) => MenuAction::CfgToggle(key.clone()),
+                                    Integer {
+                                        v: _,
+                                        max: _,
+                                        min: _,
+                                    } => MenuAction::CfgIncrement(key.clone()),
+                                };
                                 settings.push(MenuElement::new_action(
-                                    format!("{} ({})", value, profile.get_config().get(value)),
-                                    MenuAction::CfgToggle(value.to_owned()),
+                                    format!("{} ({})", key, profile.get_config().get(key)),
+                                    action,
                                 ))
                             }
                             *element.subitems_mut().unwrap() = settings;
@@ -445,10 +461,22 @@ impl MenuRenderer {
                     }
                     Profile => ProfileRenderer::new(&self.profile).render()?,
                     CfgToggle(v) => {
-                        // TODO horrible. clones twice
-                        let v = v.to_owned();
+                        let key = v.to_owned();
                         let cfg = self.profile.get_config_mut();
-                        cfg.set(v.clone(), ConfigValue::Bool(!cfg.get_bool(v.clone())));
+                        cfg.set(key.clone(), ConfigValue::Bool(!cfg.get_bool(key.clone())));
+                    }
+                    CfgIncrement(v) => {
+                        let key = v.to_owned();
+                        let cfg = self.profile.get_config_mut();
+                        if let ConfigValue::Integer { v, max, min } =
+                            cfg.get(key.clone()).to_owned()
+                        {
+                            if (v + 1) > max {
+                                cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
+                            } else {
+                                cfg.set(key.clone(), ConfigValue::Integer { v: v + 1, max, min });
+                            }
+                        }
                     }
                     _ => {
                         // if this item is a subitem, open it by pushing a new cursor
