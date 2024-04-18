@@ -173,8 +173,7 @@ impl MenuRenderer {
                             let mut settings = vec![];
                             for value in profile.get_config().map.keys() {
                                 settings.push(MenuElement::new_action(
-                                    // TODO make this formatter pretty
-                                    format!("{} ({:?})", value, profile.get_config().get(value)),
+                                    format!("{} ({})", value, profile.get_config().get(value)),
                                     MenuAction::CfgToggle(value.to_owned()),
                                 ))
                             }

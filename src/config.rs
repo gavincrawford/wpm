@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
+use crossterm::style::Stylize;
 use serde_derive::{Deserialize, Serialize};
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
@@ -62,4 +63,18 @@ impl Config {
 pub enum ConfigValue {
     Bool(bool),
     Color { r: u8, g: u8, b: u8 },
+}
+
+impl Display for ConfigValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ConfigValue::*;
+        match *self {
+            Bool(v) => write!(f, "{}", v),
+            Color { r, g, b } => write!(
+                f,
+                "{}",
+                format!("{r},{g},{b}").on(crossterm::style::Color::Rgb { r, g, b })
+            ),
+        }
+    }
 }
