@@ -136,24 +136,29 @@ impl MenuRenderer {
                         ],
                         // recents updater
                         Some(Rc::new(|profile, element| {
-                            // get recent plays
-                            let mut recents = vec![];
-                            for entry in profile.get_history().iter().rev().take(5) {
-                                recents.push(MenuElement::new_action_cb(
-                                    format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
-                                    MenuAction::Test {
-                                        wordlist: entry.wordlist.clone(),
-                                        mode: entry.mode.clone(),
-                                    },
-                                    None,
-                                ))
-                            }
-
                             // remove old subitems
                             let subitems = element.subitems_mut().unwrap(); // safe unwrap
                             subitems.retain(|v| v.subitems().is_some());
-                            for element in recents {
-                                subitems.push(element);
+
+                            // if enabled, add recents
+                            if profile.get_config().get_bool("show recent tests") {
+                                // get recent plays
+                                let mut recents = vec![];
+                                for entry in profile.get_history().iter().rev().take(5) {
+                                    recents.push(MenuElement::new_action_cb(
+                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
+                                        MenuAction::Test {
+                                            wordlist: entry.wordlist.clone(),
+                                            mode: entry.mode.clone(),
+                                        },
+                                        None,
+                                    ))
+                                }
+
+                                // add them to element subitems
+                                for element in recents {
+                                    subitems.push(element);
+                                }
                             }
                         })),
                     ),

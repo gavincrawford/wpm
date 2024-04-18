@@ -14,9 +14,8 @@ impl Default for Config {
         use ConfigValue::*;
         let mut map = HashMap::new();
         vec![
-            ("show performance indicator".into(), Bool(false)),
-            ("cursor trail head color".into(), Color { r: 0, g: 0, b: 0 }),
-            ("cursor trail tail color".into(), Color { r: 0, g: 0, b: 0 }),
+            ("show performance indicator".into(), Bool(true)),
+            ("show recent tests".into(), Bool(true)),
         ]
         .iter()
         .for_each(|cfg_val: &(String, ConfigValue)| {
