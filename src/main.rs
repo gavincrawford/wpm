@@ -44,7 +44,7 @@ fn main() -> Result<(), std::io::Error> {
 /// not in raw mode and the cursor is shown, so that the terminal environment does not get
 /// disrupted by a panic within the program.
 fn panic_handler(info: &PanicInfo) {
-    println!("{}", info);
-    queue!(stdout(), Show).unwrap();
     disable_raw_mode().unwrap();
+    queue!(stdout(), Show).unwrap();
+    println!("{}", info);
 }
