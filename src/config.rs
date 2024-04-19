@@ -1,18 +1,18 @@
-use std::{collections::HashMap, fmt::Display};
-
+use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
+use std::fmt::Display;
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
 /// work with completely default settings.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Config {
-    pub map: HashMap<String, ConfigValue>,
+    pub map: IndexMap<String, ConfigValue>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         use ConfigValue::*;
-        let mut map = HashMap::new();
+        let mut map = IndexMap::new();
         vec![
             ("show performance indicator".into(), Bool(true)),
             ("show recent tests".into(), Bool(true)),
