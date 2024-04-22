@@ -24,9 +24,6 @@ const PAD_X: u16 = 4;
 /// Base Y padding for the UI.
 const PAD_Y: u16 = 1;
 
-/// Limit of lines on the screen at a time.
-const LINE_LIMIT: u16 = 2;
-
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
     /// Wordlist used.
@@ -66,7 +63,10 @@ impl TestRenderer {
         let screen_size = size()?; // does NOT live update
         let screen_limits = (
             (PAD_X, PAD_Y + 2),
-            (screen_size.0 - (PAD_X * 2), LINE_LIMIT),
+            (
+                screen_size.0 - (PAD_X * 2),
+                config.get_int("test line limit") as u16,
+            ),
         );
         let mut frame_time = Duration::default();
         let mut stdout = stdout(); // stdout handle

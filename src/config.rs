@@ -19,9 +19,17 @@ impl Default for Config {
             (
                 "recent test count".into(),
                 Integer {
-                    v: 5,
+                    v: 3,
                     max: 10,
                     min: 0,
+                },
+            ),
+            (
+                "test line limit".into(),
+                Integer {
+                    v: 2,
+                    max: 4,
+                    min: 1,
                 },
             ),
         ]
