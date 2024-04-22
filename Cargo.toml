@@ -1,6 +1,6 @@
 [package]
 name = "wpm"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 
 [dependencies]
@@ -11,4 +11,4 @@ serde_cbor = "0.10"
 serde_derive = "1.0"
 rand = "0.8"
 textplots = "0.8"
-indexmap = { version = "2.2", features = ["serde"] } 
+indexmap = { version = "2.2", features = ["serde"] }
