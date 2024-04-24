@@ -16,6 +16,6 @@ Data can be stored in profiles to track your progress. The default profile file 
 
 The only system requirement is any [NerdFont](https://www.nerdfonts.com/), which allows more complex icons to be drawn, which improve the user experience.
 
-# Compiling
+## Compiling
 
 `wpm` is very easy to compile and execute. Just clone this repository and use Cargo to either `cargo build`, which will create a portable binary in the target directory, or `cargo run`, which will run `wpm` in-place.
