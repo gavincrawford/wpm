@@ -180,12 +180,16 @@ impl MenuRenderer {
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
                                 use ConfigValue::*;
-                                let action = match *value {
+                                let action = match value {
                                     Bool(_) => MenuAction::CfgToggle(key.clone()),
                                     Integer {
                                         v: _,
                                         max: _,
                                         min: _,
+                                    } => MenuAction::CfgIncrement(key.clone()),
+                                    Select {
+                                        options: _,
+                                        selected: _,
                                     } => MenuAction::CfgIncrement(key.clone()),
                                 };
                                 settings.push(MenuElement::new_action(
@@ -468,14 +472,37 @@ impl MenuRenderer {
                     CfgIncrement(v) => {
                         let key = v.to_owned();
                         let cfg = self.profile.get_config_mut();
-                        if let ConfigValue::Integer { v, max, min } =
-                            cfg.get(key.clone()).to_owned()
-                        {
-                            if (v + 1) > max {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
-                            } else {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: v + 1, max, min });
+                        match cfg.get(key.clone()).to_owned() {
+                            ConfigValue::Integer { v, max, min } => {
+                                if (v + 1) > max {
+                                    cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
+                                } else {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Integer { v: v + 1, max, min },
+                                    );
+                                }
                             }
+                            ConfigValue::Select { options, selected } => {
+                                if (selected + 2) > options.len() {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Select {
+                                            options,
+                                            selected: 0,
+                                        },
+                                    );
+                                } else {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Select {
+                                            options,
+                                            selected: selected + 1,
+                                        },
+                                    );
+                                }
+                            }
+                            _ => {}
                         }
                     }
                     _ => {

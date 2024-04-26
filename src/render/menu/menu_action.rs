@@ -9,7 +9,7 @@ pub enum MenuAction {
     Profile,
     /// Toggles a boolean config value.
     CfgToggle(String),
-    /// Increments config value.
+    /// Increments integer or select config values.
     CfgIncrement(String),
     /// Does nothing.
     None,
