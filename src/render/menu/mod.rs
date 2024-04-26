@@ -277,23 +277,26 @@ impl MenuRenderer {
 
                         // display each line
                         if depth == menus.len() - 1 {
-                            if idx == *cursor.last().expect("cursor is null") {
-                                if element.subitems().is_some() {
-                                    queue!(
-                                        stdout,
-                                        MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                        Print(label.clone().dark_green().on_dark_grey()),
-                                        MoveToNextLine(1)
-                                    )?;
-                                } else {
-                                    queue!(
-                                        stdout,
-                                        MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                        Print(label.clone().grey().on_dark_grey()),
-                                        MoveToNextLine(1)
-                                    )?;
-                                }
+                            let this_is_selected = idx == *cursor.last().expect("cursor is null");
+                            let this_is_menu = element.subitems().is_some();
+                            if this_is_selected && this_is_menu {
+                                // menu element under cursor
+                                queue!(
+                                    stdout,
+                                    MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
+                                    Print(label.clone().dark_green().on_dark_grey()),
+                                    MoveToNextLine(1)
+                                )?;
+                            } else if this_is_selected {
+                                // menu element under cursor
+                                queue!(
+                                    stdout,
+                                    MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
+                                    Print(label.clone().grey().on_dark_grey()),
+                                    MoveToNextLine(1)
+                                )?;
                             } else {
+                                // all other items
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
@@ -302,6 +305,7 @@ impl MenuRenderer {
                                 )?;
                             }
                         } else {
+                            // all menu items that are not in the current menu level
                             queue!(
                                 stdout,
                                 MoveRight(MARGIN as u16 + last_max_x as u16),
