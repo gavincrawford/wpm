@@ -1,4 +1,3 @@
-use crossterm::style::Stylize;
 use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt::Display;
