@@ -1,4 +1,4 @@
-use crate::render::{test::Mode, wordlist::Wordlist};
+use crate::render::{test::TestMode, wordlist::Wordlist};
 use serde_derive::{Deserialize, Serialize};
 use std::time::Duration;
 
@@ -9,7 +9,7 @@ pub struct TestResult {
     /// Wordlist used.
     pub wordlist: Wordlist,
     /// Mode used.
-    pub mode: Mode,
+    pub mode: TestMode,
     /// Hit count.
     pub hits: usize,
     /// Miss count.
@@ -24,7 +24,7 @@ impl TestResult {
     pub fn new(
         length: usize,
         wordlist: Wordlist,
-        mode: Mode,
+        mode: TestMode,
         hits: usize,
         misses: usize,
         time: Duration,

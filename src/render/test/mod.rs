@@ -31,7 +31,7 @@ pub struct TestRenderer {
     /// Wordlist used.
     wordlist: Wordlist,
     /// Mode used.
-    mode: Mode,
+    mode: TestMode,
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters, generated from the phrase.
@@ -43,7 +43,7 @@ pub struct TestRenderer {
 }
 
 impl TestRenderer {
-    pub fn new(wordlist: Wordlist, phrase: String, mode: Mode) -> Self {
+    pub fn new(wordlist: Wordlist, phrase: String, mode: TestMode) -> Self {
         Self {
             wordlist,
             mode,
@@ -82,10 +82,10 @@ impl TestRenderer {
             // render mode display and performance indicator
             queue!(stdout, MoveTo(PAD_X + 1, PAD_Y))?;
             match self.mode {
-                Mode::Words(_) => {
+                TestMode::Words(_) => {
                     queue!(stdout, Print(" WORDS".on_dark_magenta().white()))?;
                 }
-                Mode::Time(duration) => {
+                TestMode::Time(duration) => {
                     queue!(
                         stdout,
                         Print(
@@ -170,8 +170,8 @@ impl TestRenderer {
 
             // end condition
             if match self.mode {
-                Mode::Words(_) => self.cursor == self.letters.len(),
-                Mode::Time(duration) => {
+                TestMode::Words(_) => self.cursor == self.letters.len(),
+                TestMode::Time(duration) => {
                     if let Some(timer) = self.timer {
                         timer.elapsed() >= duration
                     } else {
@@ -204,12 +204,12 @@ impl TestRenderer {
 
         // if the test was ended early, don't give a score
         match self.mode {
-            Mode::Words(_) => {
+            TestMode::Words(_) => {
                 if !(self.cursor == self.phrase.len()) {
                     return Ok(None);
                 }
             }
-            Mode::Time(duration) => {
+            TestMode::Time(duration) => {
                 if let Some(timer) = self.timer {
                     if timer.elapsed() < duration {
                         return Ok(None);
@@ -223,11 +223,11 @@ impl TestRenderer {
         // get timer and wpm for score report, since the test was not terminated prematurely
         let timer = self.timer.expect("Timer unexpectedly uninitialized.");
         let wpm = match self.mode {
-            Mode::Words(_) => (
+            TestMode::Words(_) => (
                 wpm_gross(self.phrase.len(), timer.elapsed()),
                 wpm_net(self.phrase.len(), self.count_misses(), timer.elapsed()),
             ),
-            Mode::Time(_) => (
+            TestMode::Time(_) => (
                 wpm_gross(self.cursor, timer.elapsed()),
                 wpm_net(self.cursor, self.count_misses(), timer.elapsed()),
             ),

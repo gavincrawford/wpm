@@ -5,7 +5,7 @@ use super::*;
 pub enum MenuAction {
     /// Executes a test with given parameters.
     Test {
-        mode: Mode,
+        mode: TestMode,
         wordlist: Option<Wordlist>,
     },
     /// Opens profile view.

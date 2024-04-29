@@ -60,7 +60,7 @@ impl MenuRenderer {
         let profile_path = profile_path.unwrap_or(String::from("profile"));
 
         // make menu items
-        use Mode::*;
+        use TestMode::*;
         Self {
             save,
             cursor: vec![0],
@@ -428,8 +428,8 @@ impl MenuRenderer {
                         let content = get_wordlist_content(&wordlist);
                         let tokens: Vec<&str> = str_to_tokens(content.as_str());
                         let phrase = match mode {
-                            Mode::Words(length) => tokens_to_phrase(*length, &tokens),
-                            Mode::Time(_) => tokens_to_phrase(100, &tokens),
+                            TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
+                            TestMode::Time(_) => tokens_to_phrase(100, &tokens),
                         };
                         let result = TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
                             .render(self.profile.get_config())?;

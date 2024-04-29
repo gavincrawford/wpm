@@ -3,14 +3,14 @@ use std::{fmt::Display, time::Duration};
 
 /// Mode enumerator, represents which mode a test is in.
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum Mode {
+pub enum TestMode {
     Words(usize),
     Time(Duration),
 }
 
-impl Display for Mode {
+impl Display for TestMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Mode::*;
+        use TestMode::*;
         match *self {
             Words(count) => write!(f, "words {}", count),
             Time(time) => write!(f, "time {}s", time.as_secs()),
