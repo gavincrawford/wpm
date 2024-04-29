@@ -4,7 +4,10 @@ use super::*;
 #[derive(Clone)]
 pub enum MenuAction {
     /// Executes a test with given parameters.
-    Test { wordlist: Wordlist, mode: Mode },
+    Test {
+        mode: Mode,
+        wordlist: Option<Wordlist>,
+    },
     /// Opens profile view.
     Profile,
     /// Toggles a boolean config value.

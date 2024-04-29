@@ -59,6 +59,21 @@ impl Config {
             .expect(format!("no element '{}' found in configuration map", key).as_str())
     }
 
+    /// Get config values by key, select only. Will panic if called on other variants.
+    pub fn get_select(&self, key: impl Into<String>) -> String {
+        let key = key.into();
+        if let ConfigValue::Select { options, selected } = self
+            .map
+            .get(&key)
+            .expect(format!("no element '{}' found in configuration map", key).as_str())
+        {
+            // TODO no unwrap
+            options.get(*selected).unwrap().to_owned()
+        } else {
+            panic!("get_bool called on non-boolean configuration item");
+        }
+    }
+
     /// Get config values by key, boolean only. Will panic if called on other variants.
     pub fn get_bool(&self, key: impl Into<String>) -> bool {
         let key = key.into();
