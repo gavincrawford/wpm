@@ -1,6 +1,8 @@
+use crate::render::wordlist::Wordlist;
 use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt::Display;
+use strum::IntoEnumIterator;
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
 /// work with completely default settings.
@@ -35,7 +37,7 @@ impl Default for Config {
             (
                 "wordlist".into(),
                 Select {
-                    options: vec!["a".into(), "b".into(), "c".into(), "d".into(), "e".into()],
+                    options: Wordlist::iter().map(|v| format!("{:?}", v)).collect(),
                     selected: 0,
                 },
             ),

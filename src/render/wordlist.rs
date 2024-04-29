@@ -1,4 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
+use strum_macros::EnumIter;
 
 /// English 1k most used
 pub const ENG_1K: &str = include_str!("../../wordlist/eng_1k.txt");
@@ -13,7 +14,7 @@ pub const ENG_10K: &str = include_str!("../../wordlist/eng_10k.txt");
 pub const ENG_COMMON_MISSPELLED: &str = include_str!("../../wordlist/eng_misspelled.txt");
 
 /// Wordlist enumerator, which represents wordlists without carrying around all the weight.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, EnumIter)]
 pub enum Wordlist {
     English1k,
     English5k,
