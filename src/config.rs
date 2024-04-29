@@ -114,27 +114,15 @@ impl Display for ConfigValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ConfigValue::*;
         match self {
-            Bool(v) => write!(f, "{}", v),
-            Integer { v, max: _, min: _ } => write!(f, "{}", v),
+            Bool(v) => {
+                write!(f, "{}", v.to_string())
+            }
+            Integer { v, max: _, min: _ } => write!(f, "{}", v.to_string()),
             Select { options, selected } => {
-                let mut out = String::default();
-                for (idx, value) in options.iter().enumerate() {
-                    // if this is the selected value, bold it
-                    let value_style;
-                    if idx == *selected {
-                        value_style = value.to_owned().bold().italic().red().to_string();
-                    } else {
-                        value_style = value.to_owned();
-                    }
-
-                    // if this value needs a seperator, add it
-                    if idx != options.len() - 1 {
-                        out += format!("{}, ", value_style).as_str();
-                    } else {
-                        out += value_style.as_str();
-                    }
-                }
-                write!(f, "{}", out)
+                let v = options
+                    .get(*selected)
+                    .expect("Selected index outside of range.");
+                write!(f, "{}", v)
             }
         }
     }

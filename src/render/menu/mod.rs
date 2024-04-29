@@ -193,7 +193,11 @@ impl MenuRenderer {
                                     } => MenuAction::CfgIncrement(key.clone()),
                                 };
                                 settings.push(MenuElement::new_action(
-                                    format!("{} ({})", key, profile.get_config().get(key)),
+                                    format!(
+                                        "{} ({})",
+                                        key,
+                                        profile.get_config().get(key).to_string().green()
+                                    ),
                                     action,
                                 ))
                             }
