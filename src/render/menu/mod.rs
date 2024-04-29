@@ -9,7 +9,7 @@ use std::{
 };
 
 use super::{test::*, util::*, wordlist::*};
-use crate::{config::ConfigValue, profile::Profile, render::profile_stats::ProfileRenderer};
+use crate::{config::ConfigValue, profile::Profile, render::stats::StatsRenderer};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -473,7 +473,7 @@ impl MenuRenderer {
                         self.profile.record(result);
                         self.profile.update_stats();
                     }
-                    Profile => ProfileRenderer::new(&self.profile).render()?,
+                    Profile => StatsRenderer::new(&self.profile).render()?,
                     CfgToggle(v) => {
                         let key = v.to_owned();
                         let cfg = self.profile.get_config_mut();

@@ -11,12 +11,12 @@ use crossterm::{
 use textplots::*;
 
 /// Renders profile statistics.
-pub struct ProfileRenderer<'a> {
+pub struct StatsRenderer<'a> {
     /// Profile to view.
     profile: &'a Profile,
 }
 
-impl<'a> ProfileRenderer<'a> {
+impl<'a> StatsRenderer<'a> {
     pub fn new(profile: &'a Profile) -> Self {
         Self { profile }
     }
