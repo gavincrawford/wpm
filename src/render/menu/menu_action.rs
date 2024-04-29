@@ -4,12 +4,15 @@ use super::*;
 #[derive(Clone)]
 pub enum MenuAction {
     /// Executes a test with given parameters.
-    Test { wordlist: Wordlist, mode: Mode },
+    Test {
+        mode: Mode,
+        wordlist: Option<Wordlist>,
+    },
     /// Opens profile view.
     Profile,
     /// Toggles a boolean config value.
     CfgToggle(String),
-    /// Increments config value.
+    /// Increments integer or select config values.
     CfgIncrement(String),
     /// Does nothing.
     None,

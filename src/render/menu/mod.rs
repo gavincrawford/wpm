@@ -4,6 +4,7 @@ mod menu_element;
 use std::{
     io::{stdout, Write},
     rc::Rc,
+    str::FromStr,
     time::Duration,
 };
 
@@ -60,7 +61,6 @@ impl MenuRenderer {
 
         // make menu items
         use Mode::*;
-        use Wordlist::*;
         Self {
             save,
             cursor: vec![0],
@@ -77,31 +77,24 @@ impl MenuRenderer {
                                 "words",
                                 vec![
                                     MenuElement::new_action(
-                                        "easy words 10",
+                                        "words 10",
                                         MenuAction::Test {
-                                            wordlist: English1k,
                                             mode: Words(10),
+                                            wordlist: None,
                                         },
                                     ),
                                     MenuElement::new_action(
-                                        "easy words 25",
+                                        "words 25",
                                         MenuAction::Test {
-                                            wordlist: English1k,
                                             mode: Words(25),
+                                            wordlist: None,
                                         },
                                     ),
                                     MenuElement::new_action(
-                                        "hard words 10",
+                                        "words 50",
                                         MenuAction::Test {
-                                            wordlist: English10k,
-                                            mode: Words(10),
-                                        },
-                                    ),
-                                    MenuElement::new_action(
-                                        "hard words 25",
-                                        MenuAction::Test {
-                                            wordlist: English10k,
-                                            mode: Words(25),
+                                            mode: Words(50),
+                                            wordlist: None,
                                         },
                                     ),
                                 ],
@@ -113,22 +106,22 @@ impl MenuRenderer {
                                     MenuElement::new_action(
                                         "time 10s",
                                         MenuAction::Test {
-                                            wordlist: English1k,
                                             mode: Time(Duration::from_secs(10)),
+                                            wordlist: None,
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "time 30s",
                                         MenuAction::Test {
-                                            wordlist: English1k,
                                             mode: Time(Duration::from_secs(30)),
+                                            wordlist: None,
                                         },
                                     ),
                                     MenuElement::new_action(
                                         "time 1m",
                                         MenuAction::Test {
-                                            wordlist: English1k,
                                             mode: Time(Duration::from_secs(60)),
+                                            wordlist: None,
                                         },
                                     ),
                                 ],
@@ -155,8 +148,8 @@ impl MenuRenderer {
                                     recents.push(MenuElement::new_action_cb(
                                         format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         MenuAction::Test {
-                                            wordlist: entry.wordlist.clone(),
                                             mode: entry.mode.clone(),
+                                            wordlist: Some(entry.wordlist.to_owned()),
                                         },
                                         None,
                                     ))
@@ -180,16 +173,24 @@ impl MenuRenderer {
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
                                 use ConfigValue::*;
-                                let action = match *value {
+                                let action = match value {
                                     Bool(_) => MenuAction::CfgToggle(key.clone()),
                                     Integer {
                                         v: _,
                                         max: _,
                                         min: _,
                                     } => MenuAction::CfgIncrement(key.clone()),
+                                    Select {
+                                        options: _,
+                                        selected: _,
+                                    } => MenuAction::CfgIncrement(key.clone()),
                                 };
                                 settings.push(MenuElement::new_action(
-                                    format!("{} ({})", key, profile.get_config().get(key)),
+                                    format!(
+                                        "{} ({})",
+                                        key,
+                                        profile.get_config().get(key).to_string().green()
+                                    ),
                                     action,
                                 ))
                             }
@@ -414,7 +415,16 @@ impl MenuRenderer {
                 use MenuAction::*;
                 match &e.action() {
                     Test { mode, wordlist } => {
-                        // get test wordlist information for later
+                        // if the wordlist is present, use it. otherwise, use the one in the
+                        // configuration file
+                        let wordlist = wordlist.to_owned().unwrap_or(
+                            Wordlist::from_str(
+                                self.profile.get_config().get_select("wordlist").as_str(),
+                            )
+                            .expect("Failed to obtain wordlist from configuration value."),
+                        );
+
+                        // execute test renderer
                         let content = get_wordlist_content(&wordlist);
                         let tokens: Vec<&str> = str_to_tokens(content.as_str());
                         let phrase = match mode {
@@ -472,14 +482,37 @@ impl MenuRenderer {
                     CfgIncrement(v) => {
                         let key = v.to_owned();
                         let cfg = self.profile.get_config_mut();
-                        if let ConfigValue::Integer { v, max, min } =
-                            cfg.get(key.clone()).to_owned()
-                        {
-                            if (v + 1) > max {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
-                            } else {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: v + 1, max, min });
+                        match cfg.get(key.clone()).to_owned() {
+                            ConfigValue::Integer { v, max, min } => {
+                                if (v + 1) > max {
+                                    cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
+                                } else {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Integer { v: v + 1, max, min },
+                                    );
+                                }
                             }
+                            ConfigValue::Select { options, selected } => {
+                                if (selected + 2) > options.len() {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Select {
+                                            options,
+                                            selected: 0,
+                                        },
+                                    );
+                                } else {
+                                    cfg.set(
+                                        key.clone(),
+                                        ConfigValue::Select {
+                                            options,
+                                            selected: selected + 1,
+                                        },
+                                    );
+                                }
+                            }
+                            _ => {}
                         }
                     }
                     _ => {

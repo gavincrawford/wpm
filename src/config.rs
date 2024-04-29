@@ -1,6 +1,8 @@
+use crate::render::wordlist::Wordlist;
 use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt::Display;
+use strum::IntoEnumIterator;
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
 /// work with completely default settings.
@@ -32,6 +34,13 @@ impl Default for Config {
                     min: 1,
                 },
             ),
+            (
+                "wordlist".into(),
+                Select {
+                    options: Wordlist::iter().map(|v| format!("{:?}", v)).collect(),
+                    selected: 0,
+                },
+            ),
         ]
         .iter()
         .for_each(|cfg_val: &(String, ConfigValue)| {
@@ -48,6 +57,21 @@ impl Config {
         self.map
             .get(&key)
             .expect(format!("no element '{}' found in configuration map", key).as_str())
+    }
+
+    /// Get config values by key, select only. Will panic if called on other variants.
+    pub fn get_select(&self, key: impl Into<String>) -> String {
+        let key = key.into();
+        if let ConfigValue::Select { options, selected } = self
+            .map
+            .get(&key)
+            .expect(format!("no element '{}' found in configuration map", key).as_str())
+        {
+            // TODO no unwrap
+            options.get(*selected).unwrap().to_owned()
+        } else {
+            panic!("get_bool called on non-boolean configuration item");
+        }
     }
 
     /// Get config values by key, boolean only. Will panic if called on other variants.
@@ -91,15 +115,31 @@ impl Config {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ConfigValue {
     Bool(bool),
-    Integer { v: i32, max: i32, min: i32 },
+    Integer {
+        v: i32,
+        max: i32,
+        min: i32,
+    },
+    Select {
+        options: Vec<String>,
+        selected: usize,
+    },
 }
 
 impl Display for ConfigValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ConfigValue::*;
-        match *self {
-            Bool(v) => write!(f, "{}", v),
-            Integer { v, max: _, min: _ } => write!(f, "{}", v),
+        match self {
+            Bool(v) => {
+                write!(f, "{}", v.to_string())
+            }
+            Integer { v, max: _, min: _ } => write!(f, "{}", v.to_string()),
+            Select { options, selected } => {
+                let v = options
+                    .get(*selected)
+                    .expect("Selected index outside of range.");
+                write!(f, "{}", v)
+            }
         }
     }
 }
