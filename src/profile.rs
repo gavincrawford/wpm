@@ -1,50 +1,6 @@
-use std::{fs::File, time::Duration};
-
-use crate::{
-    config::Config,
-    render::{test::Mode, wordlist::Wordlist},
-};
+use crate::{config::Config, render::test::TestResult};
 use serde_derive::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct TestResult {
-    /// Test length in words.
-    pub length: usize,
-    /// Wordlist used.
-    pub wordlist: Wordlist,
-    /// Mode used.
-    pub mode: Mode,
-    /// Hit count.
-    pub hits: usize,
-    /// Miss count.
-    pub misses: usize,
-    /// Total time taken.
-    pub time: Duration,
-    /// Calculated WPMs, in (gross, net) format.
-    pub wpm: (f32, f32),
-}
-
-impl TestResult {
-    pub fn new(
-        length: usize,
-        wordlist: Wordlist,
-        mode: Mode,
-        hits: usize,
-        misses: usize,
-        time: Duration,
-        wpm: (f32, f32),
-    ) -> Self {
-        Self {
-            length,
-            wordlist,
-            mode,
-            hits,
-            misses,
-            time,
-            wpm,
-        }
-    }
-}
+use std::fs::File;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ProfileStatistics {

@@ -1,5 +1,6 @@
 mod letter;
 mod mode;
+mod result;
 
 use std::{
     io::{stdout, Write},
@@ -7,7 +8,7 @@ use std::{
 };
 
 use super::{util::*, wordlist::Wordlist};
-use crate::{config::Config, profile::TestResult};
+use crate::config::Config;
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -17,6 +18,7 @@ use crossterm::{
 };
 pub use letter::*;
 pub use mode::*;
+pub use result::*;
 
 /// Base X padding for the UI.
 const PAD_X: u16 = 4;
