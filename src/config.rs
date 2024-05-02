@@ -67,8 +67,10 @@ impl Config {
             .get(&key)
             .expect(format!("no element '{}' found in configuration map", key).as_str())
         {
-            // TODO no unwrap
-            options.get(*selected).unwrap().to_owned()
+            options
+                .get(*selected)
+                .expect(format!("option at position {selected} not found").as_str())
+                .to_owned()
         } else {
             panic!("get_bool called on non-boolean configuration item");
         }
