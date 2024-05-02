@@ -147,7 +147,7 @@ impl TestRenderer {
                     Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
                     Hit(c) => {
                         let char_age = self.cursor as i32 - idx as i32;
-                        let color = color_lerp((0, 255, 0), (180, 230, 0), char_age as f32 / 50.);
+                        let color = color_lerp((90, 255, 50), (30, 200, 30), char_age as f32 / 50.);
                         queue!(stdout, Print(c.black().on(color).italic()))?
                     }
                     Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
