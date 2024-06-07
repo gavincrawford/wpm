@@ -3,7 +3,7 @@ mod mode;
 mod result;
 
 use std::{
-    io::{stdout, Write},
+    io::{stdout, Stdout, Write},
     time::{Duration, Instant},
 };
 
@@ -79,29 +79,10 @@ impl TestRenderer {
             // start frametime timer
             let dt = Instant::now();
 
-            // render mode display and performance indicator
-            queue!(stdout, MoveTo(PAD_X + 1, PAD_Y))?;
-            match self.mode {
-                TestMode::Words(_) => {
-                    queue!(stdout, Print(" WORDS".on_dark_magenta().white()))?;
-                }
-                TestMode::Time(duration) => {
-                    queue!(
-                        stdout,
-                        Print(
-                            format!(
-                                " TIME [ {: ^5.2}s]",
-                                (duration.saturating_sub(
-                                    self.timer.unwrap_or(Instant::now()).elapsed()
-                                ))
-                                .as_secs_f32()
-                            )
-                            .on_dark_green()
-                            .white()
-                        )
-                    )?;
-                }
-            }
+            // render mode info
+            self.render_mode(&mut stdout)?;
+
+            // render performance indicator
             if config.get_bool("show performance indicator") {
                 let perf_factor = (frame_time.as_secs_f32() / 0.1) as f32;
                 queue!(
@@ -282,6 +263,32 @@ impl TestRenderer {
             }
             _ => {}
         }
+    }
+
+    /// Displays the mode and perf badge.
+    fn render_mode(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+        queue!(stdout, MoveTo(PAD_X + 1, PAD_Y))?;
+        match self.mode {
+            TestMode::Words(_) => {
+                queue!(stdout, Print(" WORDS".on_dark_magenta().white()))?;
+            }
+            TestMode::Time(duration) => {
+                queue!(
+                    stdout,
+                    Print(
+                        format!(
+                            " TIME [ {: ^5.2}s]",
+                            (duration
+                                .saturating_sub(self.timer.unwrap_or(Instant::now()).elapsed()))
+                            .as_secs_f32()
+                        )
+                        .on_dark_green()
+                        .white()
+                    )
+                )?;
+            }
+        }
+        Ok(())
     }
 
     /// Counts the number of instances of the `Letter::Hit`.
