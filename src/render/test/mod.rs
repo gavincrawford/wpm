@@ -40,6 +40,10 @@ pub struct TestRenderer {
     timer: Option<Instant>,
     /// Cursor position.
     cursor: usize,
+    /// Screen size.
+    screen_size: (u16, u16),
+    /// Textbox limits.
+    text_limit: ((u16, u16), (u16, u16)),
 }
 
 impl TestRenderer {
@@ -55,6 +59,8 @@ impl TestRenderer {
                 .collect::<Vec<Box<Letter>>>(),
             timer: None,
             cursor: 0,
+            screen_size: (0, 0),
+            text_limit: ((0, 0), (0, 0)),
         }
     }
 
@@ -62,11 +68,11 @@ impl TestRenderer {
     /// work as intended.
     pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
-        let screen_size = size()?; // does NOT live update
-        let screen_limits = (
+        self.screen_size = size()?;
+        self.text_limit = (
             (PAD_X, PAD_Y + 2),
             (
-                screen_size.0 - (PAD_X * 2),
+                self.screen_size.0 - (PAD_X * 2),
                 config.get_int("test line limit") as u16,
             ),
         );
@@ -93,56 +99,22 @@ impl TestRenderer {
             }
 
             // move to the top corner of the draw area and hide
-            queue!(stdout, MoveTo(screen_limits.0 .0, screen_limits.0 .1), Hide)?;
+            queue!(
+                stdout,
+                MoveTo(self.text_limit.0 .0, self.text_limit.0 .1),
+                Hide
+            )?;
 
-            // render characters
-            let mut letters_on_line = 0;
-            let mut lines_on_screen = 0;
-            for (idx, letter) in self.letters.iter().enumerate() {
-                // if there's too many letters on this line, go to next line
-                if letters_on_line >= screen_limits.1 .0 {
-                    lines_on_screen += 1;
-                    letters_on_line = 0;
-                    queue!(
-                        stdout,
-                        MoveTo(screen_limits.0 .0, screen_limits.0 .1 + lines_on_screen)
-                    )?;
-                }
-
-                // if there's too many lines, cut off here
-                if lines_on_screen >= screen_limits.1 .1 {
-                    queue!(
-                        stdout,
-                        MoveTo(
-                            (screen_size.0 / 2) as u16,
-                            screen_limits.0 .1 + lines_on_screen
-                        ),
-                        Print("...")
-                    )?;
-                    break;
-                }
-
-                // render letter
-                use Letter::*;
-                match **letter {
-                    Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
-                    Hit(c) => {
-                        let char_age = self.cursor as i32 - idx as i32;
-                        let color = color_lerp((90, 255, 50), (30, 200, 30), char_age as f32 / 50.);
-                        queue!(stdout, Print(c.black().on(color).italic()))?
-                    }
-                    Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
-                }
-                letters_on_line += 1;
-            }
+            // render textbox
+            self.render_textbox(&mut stdout)?;
 
             // wrap content in respect to screen limits
-            queue!(stdout, move_to_wrap(self.cursor, screen_limits.1), Show)?;
-            if screen_limits.0 .0 > 0 {
-                queue!(stdout, MoveRight(screen_limits.0 .0))?;
+            queue!(stdout, move_to_wrap(self.cursor, self.text_limit.1), Show)?;
+            if self.text_limit.0 .0 > 0 {
+                queue!(stdout, MoveRight(self.text_limit.0 .0))?;
             }
-            if screen_limits.0 .1 > 0 {
-                queue!(stdout, MoveDown(screen_limits.0 .1))?;
+            if self.text_limit.0 .1 > 0 {
+                queue!(stdout, MoveDown(self.text_limit.0 .1))?;
             }
 
             // finished rendering, so flush to terminal
@@ -263,6 +235,52 @@ impl TestRenderer {
             }
             _ => {}
         }
+    }
+
+    fn render_textbox(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+        // render characters
+        let mut letters_on_line = 0;
+        let mut lines_on_screen = 0;
+        for (idx, letter) in self.letters.iter().enumerate() {
+            // if there's too many letters on this line, go to next line
+            if letters_on_line >= self.text_limit.1 .0 {
+                lines_on_screen += 1;
+                letters_on_line = 0;
+                queue!(
+                    stdout,
+                    MoveTo(self.text_limit.0 .0, self.text_limit.0 .1 + lines_on_screen)
+                )?;
+            }
+
+            // if there's too many lines, cut off here
+            if lines_on_screen >= self.text_limit.1 .1 {
+                queue!(
+                    stdout,
+                    MoveTo(
+                        (self.screen_size.0 / 2) as u16,
+                        self.text_limit.0 .1 + lines_on_screen
+                    ),
+                    Print("...")
+                )?;
+                break;
+            }
+
+            // render letter
+            use Letter::*;
+            match **letter {
+                Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
+                Hit(c) => {
+                    let char_age = self.cursor as i32 - idx as i32;
+                    let color = color_lerp((90, 255, 50), (30, 200, 30), char_age as f32 / 50.);
+                    queue!(stdout, Print(c.black().on(color).italic()))?
+                }
+                Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
+            }
+            letters_on_line += 1;
+        }
+
+        // done
+        Ok(())
     }
 
     /// Displays the mode and perf badge.
