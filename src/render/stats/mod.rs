@@ -8,6 +8,7 @@ use crossterm::{
     style::{Print, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size},
 };
+use rgb::RGB;
 use textplots::*;
 
 /// Renders profile statistics.
@@ -42,40 +43,49 @@ impl<'a> StatsRenderer<'a> {
         queue!(
             stdout,
             MoveTo(0, 0),
-            Print("AVERAGE WPM GROSS"),
+            Print("AVERAGE WPM"),
             MoveToNextLine(1)
         )?;
         disable_raw_mode()?;
         Chart::new(screen.0.into(), screen.1.into(), 0., history.len() as f32)
-            .lineplot(&Shape::Continuous(Box::new(|x| {
-                if x > 1. {
-                    let delta: f32 = x % 1.;
-                    let delta = delta * delta;
-                    let last_step = history.get(x as usize - 1).unwrap().wpm.0 as f32;
-                    let this_step = history.get(x as usize).unwrap().wpm.0 as f32;
-                    last_step * (1.0 - delta) + this_step * delta
-                } else {
-                    history.get(0).unwrap().wpm.0
-                }
-            })))
-            .display();
-        enable_raw_mode()?;
-
-        // net wpm chart
-        queue!(stdout, Print("AVERAGE WPM NET"), MoveToNextLine(1))?;
-        disable_raw_mode()?;
-        Chart::new(screen.0.into(), screen.1.into(), 0., history.len() as f32)
-            .lineplot(&Shape::Continuous(Box::new(|x| {
-                if x > 1. {
-                    let delta: f32 = x % 1.;
-                    let delta = delta * delta;
-                    let last_step = history.get(x as usize - 1).unwrap().wpm.1 as f32;
-                    let this_step = history.get(x as usize).unwrap().wpm.1 as f32;
-                    last_step * (1.0 - delta) + this_step * delta
-                } else {
-                    history.get(0).unwrap().wpm.0
-                }
-            })))
+            .linecolorplot(
+                &Shape::Continuous(Box::new(|x| {
+                    // plot the average wpm with a exponential smoothing function
+                    if x > 1. {
+                        let delta: f32 = (x % 1.).powf(2_f32);
+                        let last_step = history.get(x as usize - 1).unwrap().wpm.1 as f32;
+                        let this_step = history.get(x as usize).unwrap().wpm.1 as f32;
+                        last_step * (1.0 - delta) + this_step * delta
+                    } else {
+                        history.get(0).unwrap().wpm.1
+                    }
+                })),
+                RGB {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                },
+            )
+            .linecolorplot(
+                &Shape::Continuous(Box::new(|x| {
+                    // TODO exp. smoothing, as done above ^^
+                    // plot the average of five
+                    if x > 1. {
+                        let x = x as usize;
+                        (x.saturating_sub(4)..=x - 1)
+                            .filter_map(|i| Some(history.get(i).unwrap().wpm.1))
+                            .sum::<f32>()
+                            / (x - x.saturating_sub(4)) as f32
+                    } else {
+                        history.get(0).unwrap().wpm.1
+                    }
+                })),
+                RGB {
+                    r: 145,
+                    g: 145,
+                    b: 145,
+                },
+            )
             .display();
         enable_raw_mode()?;
 
