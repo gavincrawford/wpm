@@ -68,14 +68,12 @@ impl<'a> StatsRenderer<'a> {
             )
             .linecolorplot(
                 &Shape::Continuous(Box::new(|x| {
-                    // TODO exp. smoothing, as done above ^^
-                    // plot the average of five
+                    // plot the average of five with a exponential smoothing function
                     if x > 1. {
-                        let x = x as usize;
-                        (x.saturating_sub(4)..=x - 1)
-                            .filter_map(|i| Some(history.get(i).unwrap().wpm.1))
-                            .sum::<f32>()
-                            / (x - x.saturating_sub(4)) as f32
+                        let delta: f32 = (x % 1.).powf(2_f32);
+                        let last_step = self.avg_of_five(x as usize - 1);
+                        let this_step = self.avg_of_five(x as usize);
+                        last_step * (1.0 - delta) + this_step * delta
                     } else {
                         history.get(0).unwrap().wpm.1
                     }
@@ -122,5 +120,12 @@ impl<'a> StatsRenderer<'a> {
 
         // done
         Ok(())
+    }
+
+    fn avg_of_five(&self, x: usize) -> f32 {
+        (x.saturating_sub(4)..=x.saturating_sub(1))
+            .filter_map(|i| Some(self.profile.get_history().get(i).unwrap().wpm.1))
+            .sum::<f32>()
+            / (x - x.saturating_sub(4)) as f32
     }
 }
