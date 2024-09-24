@@ -2,3 +2,4 @@ All wordlists are sourced from [Monkeytype](https://github.com/monkeytypegame/mo
 Wordlists have been converted, stripped of metadata, and adapted for use in this program.
 Big thanks to Monkeytype for making their code available to the public!
 
+Wordlists have been compressed with GZip for file size.
