@@ -15,6 +15,15 @@ pub const ENG_10K: &[u8] = include_bytes!("../../wordlist/eng_10k.txt.gz");
 /// English most commonly misspelled words
 pub const ENG_COMMON_MISSPELLED: &[u8] = include_bytes!("../../wordlist/eng_misspelled.txt.gz");
 
+/// Code, C++.
+pub const CODE_CPP: &[u8] = include_bytes!("../../wordlist/code_cpp.txt.gz");
+
+/// Code, C.
+pub const CODE_C: &[u8] = include_bytes!("../../wordlist/code_c.txt.gz");
+
+/// Code, JavaScript.
+pub const CODE_JS: &[u8] = include_bytes!("../../wordlist/code_javascript.txt.gz");
+
 /// Wordlist enumerator, which represents wordlists without carrying around all the weight.
 #[derive(Clone, Debug, Serialize, Deserialize, EnumIter, EnumString)]
 pub enum Wordlist {
@@ -22,6 +31,9 @@ pub enum Wordlist {
     English5k,
     English10k,
     EnglishCommonMisspelled,
+    CodeCPP,
+    CodeC,
+    CodeJS,
 }
 
 /// Converts enum to wordlist content.
@@ -32,6 +44,9 @@ pub fn get_wordlist_content(wordlist: &Wordlist) -> String {
         Wordlist::English5k => GzDecoder::new(ENG_5K),
         Wordlist::English10k => GzDecoder::new(ENG_10K),
         Wordlist::EnglishCommonMisspelled => GzDecoder::new(ENG_COMMON_MISSPELLED),
+        Wordlist::CodeCPP => GzDecoder::new(CODE_CPP),
+        Wordlist::CodeC => GzDecoder::new(CODE_C),
+        Wordlist::CodeJS => GzDecoder::new(CODE_JS),
     };
     let mut buf = String::new();
     decoder
