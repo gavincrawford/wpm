@@ -47,44 +47,49 @@ impl<'a> StatsRenderer<'a> {
             MoveToNextLine(1)
         )?;
         disable_raw_mode()?;
-        Chart::new(screen.0.into(), screen.1.into(), 0., history.len() as f32)
-            .linecolorplot(
-                &Shape::Continuous(Box::new(|x| {
-                    // plot the average wpm with a exponential smoothing function
-                    if x > 1. {
-                        let delta: f32 = (x % 1.).powf(2_f32);
-                        let last_step = history.get(x as usize - 1).unwrap().wpm.1 as f32;
-                        let this_step = history.get(x as usize).unwrap().wpm.1 as f32;
-                        last_step * (1.0 - delta) + this_step * delta
-                    } else {
-                        history.get(0).unwrap().wpm.1
-                    }
-                })),
-                RGB {
-                    r: 255,
-                    g: 255,
-                    b: 255,
-                },
-            )
-            .linecolorplot(
-                &Shape::Continuous(Box::new(|x| {
-                    // plot the average of five with a exponential smoothing function
-                    if x > 1. {
-                        let delta: f32 = (x % 1.).powf(2_f32);
-                        let last_step = self.avg_of_five(x as usize - 1);
-                        let this_step = self.avg_of_five(x as usize);
-                        last_step * (1.0 - delta) + this_step * delta
-                    } else {
-                        history.get(0).unwrap().wpm.1
-                    }
-                })),
-                RGB {
-                    r: 145,
-                    g: 145,
-                    b: 145,
-                },
-            )
-            .display();
+        Chart::new(
+            (screen.0 as u32 * 2) - 10,
+            (screen.1 as u32 * 2) - 10,
+            0.,
+            history.len() as f32,
+        )
+        .linecolorplot(
+            &Shape::Continuous(Box::new(|x| {
+                // plot the average wpm with a exponential smoothing function
+                if x > 1. {
+                    let delta: f32 = (x % 1.).powf(2_f32);
+                    let last_step = history.get(x as usize - 1).unwrap().wpm.1 as f32;
+                    let this_step = history.get(x as usize).unwrap().wpm.1 as f32;
+                    last_step * (1.0 - delta) + this_step * delta
+                } else {
+                    history.get(0).unwrap().wpm.1
+                }
+            })),
+            RGB {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
+        )
+        .linecolorplot(
+            &Shape::Continuous(Box::new(|x| {
+                // plot the average of five with a exponential smoothing function
+                if x > 1. {
+                    let delta: f32 = (x % 1.).powf(2_f32);
+                    let last_step = self.avg_of_five(x as usize - 1);
+                    let this_step = self.avg_of_five(x as usize);
+                    last_step * (1.0 - delta) + this_step * delta
+                } else {
+                    history.get(0).unwrap().wpm.1
+                }
+            })),
+            RGB {
+                r: 145,
+                g: 145,
+                b: 145,
+            },
+        )
+        .display();
         enable_raw_mode()?;
 
         // render some simple profile stats
