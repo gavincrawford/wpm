@@ -24,7 +24,7 @@ pub const CODE_C: &[u8] = include_bytes!("../../wordlist/code_c.txt.gz");
 /// Code, JavaScript.
 pub const CODE_JS: &[u8] = include_bytes!("../../wordlist/code_javascript.txt.gz");
 
-/// Wordlist enumerator, which represents wordlists without carrying around all the weight.
+/// Represents wordlists without carrying their data.
 #[derive(Clone, Debug, Serialize, Deserialize, EnumIter, EnumString)]
 pub enum Wordlist {
     English1k,

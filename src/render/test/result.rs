@@ -2,6 +2,7 @@ use crate::render::{test::TestMode, wordlist::Wordlist};
 use serde_derive::{Deserialize, Serialize};
 use std::time::Duration;
 
+/// Contains all information about a test result, including performance metrics.
 #[derive(Serialize, Deserialize)]
 pub struct TestResult {
     /// Test length in words.

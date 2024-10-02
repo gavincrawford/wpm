@@ -259,8 +259,8 @@ impl MenuRenderer {
                         .checked_sub(1)
                         .unwrap_or(0)),
                 );
-            let mut this_max_x: usize = 0; // the longest line of any render
-            let mut last_max_x: usize = 0; // the longest line of this render
+            let mut this_max_x: usize = 0; // the longest line of this render cycle
+            let mut last_max_x: usize = 0; // the longest line of the last render cycle
 
             // render main menu stack
             for (depth, menu) in menus.iter().enumerate() {

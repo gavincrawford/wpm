@@ -34,7 +34,7 @@ pub struct TestRenderer {
     mode: TestMode,
     /// Phrase the user will be tested on.
     phrase: String,
-    /// Letters, generated from the phrase.
+    /// Letters of the selected phrase.
     letters: Vec<Box<Letter>>,
     /// Test timer.
     timer: Option<Instant>,
@@ -64,8 +64,8 @@ impl TestRenderer {
         }
     }
 
-    /// Starts and runs the test until completed. Uses key handlers and other supporting functions to
-    /// work as intended.
+    /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
+    /// applicable, containing information about performance.
     pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         self.screen_size = size()?;

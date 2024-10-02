@@ -1,7 +1,7 @@
 use serde_derive::{Deserialize, Serialize};
 use std::{fmt::Display, time::Duration};
 
-/// Mode enumerator, represents which mode a test is in.
+/// Represents which mode a test is in.
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum TestMode {
     Words(usize),
