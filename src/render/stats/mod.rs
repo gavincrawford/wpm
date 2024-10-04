@@ -129,7 +129,7 @@ impl<'a> StatsRenderer<'a> {
 
     /// Gets the average net WPM of the test results from `x-5` to `x`.
     fn avg_of_five(&self, x: usize) -> f32 {
-        (x.saturating_sub(5)..=x)
+        (x.saturating_sub(4)..=x)
             .filter_map(|i| Some(self.profile.get_history().get(i).unwrap().wpm.1))
             .sum::<f32>()
             / (x - x.saturating_sub(5)) as f32
