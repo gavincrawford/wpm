@@ -41,23 +41,16 @@ pub struct MenuRenderer {
 
 impl MenuRenderer {
     pub fn new(profile_path: Option<String>) -> Self {
-        // open profile
-        let profile;
-        let mut save = false;
-        if let Some(profile_path) = &profile_path {
-            // if profile exists, get it. otherwise, make a default one
-            if let Ok(profile_from_data) = Profile::read_from(profile_path) {
-                profile = profile_from_data;
-            } else {
-                profile = Profile::default();
-            }
-            save = true;
-        } else {
-            profile = Profile::default();
-        }
+        // if no profile was specified, the user does not want to save
+        let save = profile_path.is_some();
 
-        // if no path override is provided, default to `./profile`
+        // load stored profile, or default if applicable
         let profile_path = profile_path.unwrap_or(String::from("profile"));
+        let profile = if !save {
+            Profile::default()
+        } else {
+            Profile::read_from(&profile_path).unwrap_or_default()
+        };
 
         // make menu items
         use TestMode::*;
