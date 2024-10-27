@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    collections::VecDeque,
+    time::{Duration, Instant},
+};
 
 use super::wpm_gross;
 
@@ -6,7 +9,7 @@ const WINDOW: Duration = Duration::from_secs(1);
 
 pub struct LiveWPM {
     /// All moments in which a key was pressed that reside within the set time window.
-    keypresses: Vec<Instant>,
+    keypresses: VecDeque<Instant>,
     /// The instant in which the WPM was last queried.
     last_instant: Instant,
     /// The last computed instant WPM.
@@ -16,7 +19,7 @@ pub struct LiveWPM {
 impl LiveWPM {
     pub fn new() -> Self {
         Self {
-            keypresses: vec![],
+            keypresses: VecDeque::with_capacity(20),
             last_instant: Instant::now(),
             last_wpm: 0.,
         }
@@ -24,7 +27,7 @@ impl LiveWPM {
 
     /// Registers a keypress at the current instant.
     pub fn press(&mut self) {
-        self.keypresses.push(Instant::now());
+        self.keypresses.push_back(Instant::now());
     }
 
     /// Gives the WPM achieved over the set time window, and trims keypress entries that exceed it.
@@ -41,19 +44,17 @@ impl LiveWPM {
             self.last_instant = Instant::now();
         }
 
-        // trim entries, as well as count them
-        let mut total_entries = 0;
-        self.keypresses.retain(|instant| {
-            if instant.elapsed() < WINDOW {
-                total_entries += 1;
-                true
+        // remove entries that exceed the time window
+        while let Some(instant) = self.keypresses.front() {
+            if instant.elapsed() > WINDOW {
+                self.keypresses.pop_front();
             } else {
-                false
+                break;
             }
-        });
+        }
 
         // return calculated WPM, ignoring errors
-        self.last_wpm = wpm_gross(total_entries, WINDOW);
+        self.last_wpm = wpm_gross(self.keypresses.len(), WINDOW);
         self.last_wpm
     }
 }
