@@ -17,6 +17,7 @@ impl Default for Config {
         let mut map = IndexMap::new();
         vec![
             ("show performance indicator".into(), Bool(true)),
+            ("show live words per minute".into(), Bool(true)),
             ("show recent tests".into(), Bool(true)),
             (
                 "recent test count".into(),

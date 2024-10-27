@@ -104,11 +104,13 @@ impl TestRenderer {
             }
 
             // render live wpm
-            queue!(
-                stdout,
-                MoveRight(1),
-                Print(format!("WPM: {:>3.1}", self.live_wpm.wpm() as usize).on_dark_grey())
-            )?;
+            if config.get_bool("show live words per minute") {
+                queue!(
+                    stdout,
+                    MoveRight(1),
+                    Print(format!("WPM: {:>3.1}", self.live_wpm.wpm() as usize).on_dark_grey())
+                )?;
+            }
 
             // move to the top corner of the draw area and hide
             queue!(
