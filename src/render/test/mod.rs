@@ -1,4 +1,5 @@
 mod letter;
+mod live_wpm;
 mod mode;
 mod result;
 
@@ -17,6 +18,7 @@ use crossterm::{
     terminal::size,
 };
 pub use letter::*;
+use live_wpm::*;
 pub use mode::*;
 pub use result::*;
 
@@ -28,6 +30,8 @@ const PAD_Y: u16 = 1;
 
 /// Renders a typing test with the given phrase.
 pub struct TestRenderer {
+    /// Tracks the live WPM.
+    live_wpm: LiveWPM,
     /// Wordlist used.
     wordlist: Wordlist,
     /// Mode used.
@@ -49,6 +53,7 @@ pub struct TestRenderer {
 impl TestRenderer {
     pub fn new(wordlist: Wordlist, phrase: String, mode: TestMode) -> Self {
         Self {
+            live_wpm: LiveWPM::new(),
             wordlist,
             mode,
             phrase: phrase.clone(),
@@ -98,6 +103,13 @@ impl TestRenderer {
                 )?;
             }
 
+            // render live wpm
+            queue!(
+                stdout,
+                MoveRight(1),
+                Print(format!("WPM: {:.1}", self.live_wpm.wpm()))
+            )?;
+
             // move to the top corner of the draw area and hide
             queue!(
                 stdout,
@@ -144,7 +156,10 @@ impl TestRenderer {
                 match read()? {
                     Key(key) => match key.code {
                         Esc => break,
-                        _ => self.handle_key(key),
+                        _ => {
+                            self.live_wpm.press();
+                            self.handle_key(key);
+                        }
                     },
                     _ => {}
                 }
