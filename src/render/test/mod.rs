@@ -107,7 +107,7 @@ impl TestRenderer {
             queue!(
                 stdout,
                 MoveRight(1),
-                Print(format!("WPM: {:.1}", self.live_wpm.wpm()))
+                Print(format!("WPM: {:>3.1}", self.live_wpm.wpm() as usize).on_dark_grey())
             )?;
 
             // move to the top corner of the draw area and hide
