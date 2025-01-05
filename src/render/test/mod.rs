@@ -168,8 +168,9 @@ impl TestRenderer {
             }
         }
 
-        // show cursor and clear
-        execute!(stdout, Show)?;
+        // show cursor, reset color, and clear
+        execute!(stdout, Print("x".reset()), Show)?; // for some reason, this `print("x".reset())`
+                                                     // is the only way to prevent screen flashes
         clear(&mut stdout);
 
         // if the test was ended early, don't give a score
