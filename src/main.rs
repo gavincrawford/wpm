@@ -1,4 +1,4 @@
-use std::{io::stdout, panic::PanicInfo};
+use std::{io::stdout, panic::PanicHookInfo};
 
 use clap::{arg, Command};
 use crossterm::{
@@ -43,7 +43,7 @@ fn main() -> Result<(), std::io::Error> {
 /// Handles any panics that may occur. This handler ensures that, if not already, the terminal is
 /// not in raw mode and the cursor is shown, so that the terminal environment does not get
 /// disrupted by a panic within the program.
-fn panic_handler(info: &PanicInfo) {
+fn panic_handler(info: &PanicHookInfo) {
     disable_raw_mode().unwrap();
     queue!(stdout(), Show).unwrap();
     println!("{}", info);

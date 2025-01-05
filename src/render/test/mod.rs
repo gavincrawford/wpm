@@ -39,7 +39,7 @@ pub struct TestRenderer {
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters of the selected phrase.
-    letters: Vec<Box<Letter>>,
+    letters: Box<Vec<Letter>>,
     /// Test timer.
     timer: Option<Instant>,
     /// Cursor position.
@@ -57,11 +57,13 @@ impl TestRenderer {
             wordlist,
             mode,
             phrase: phrase.clone(),
-            letters: phrase
-                .as_bytes()
-                .iter()
-                .map(|c| Box::from(Letter::Char(*c as char)))
-                .collect::<Vec<Box<Letter>>>(),
+            letters: Box::from(
+                phrase
+                    .as_bytes()
+                    .iter()
+                    .map(|c| Letter::Char(*c as char))
+                    .collect::<Vec<Letter>>(),
+            ),
             timer: None,
             cursor: 0,
             screen_size: (0, 0),
@@ -234,7 +236,7 @@ impl TestRenderer {
                 }
                 self.cursor -= 1;
                 let cursor_letter = self.letters.get_mut(self.cursor).unwrap();
-                **cursor_letter = Letter::Char(match **cursor_letter {
+                *cursor_letter = Letter::Char(match *cursor_letter {
                     Letter::Char(c) => c,
                     Letter::Hit(c) => c,
                     Letter::Miss(c) => c,
@@ -242,17 +244,47 @@ impl TestRenderer {
             }
             Char(c) => {
                 let cursor_letter = self.letters.get_mut(self.cursor).unwrap();
-                if let Letter::Char(cursor_char) = **cursor_letter {
-                    self.cursor += 1;
-                    if c != cursor_char {
-                        **cursor_letter = Letter::Miss(cursor_char);
+                if let Letter::Char(cursor_char) = *cursor_letter {
+                    if c == cursor_char {
+                        // correct keypress
+                        *cursor_letter = Letter::Hit(cursor_char);
+                    } else if c == ' ' {
+                        // early space - jump to end
+                        self.jump_to_end();
+                    } else if cursor_char == ' ' {
+                        // don't allow progression past an error
+                        return;
                     } else {
-                        **cursor_letter = Letter::Hit(cursor_char);
+                        // incorrect keypress
+                        *cursor_letter = Letter::Miss(cursor_char);
                     }
+                    self.cursor += 1;
                 }
             }
             _ => {}
         }
+    }
+
+    /// Jumps the cursor to the space following the current word.
+    fn jump_to_end(&mut self) {
+        // jump cursor to the nearest space
+        for (i, l) in self
+            .letters
+            .iter_mut()
+            .enumerate()
+            .skip(self.cursor.saturating_sub(1))
+        {
+            if let Letter::Char(c) = l {
+                if *c == ' ' {
+                    *l = Letter::Hit(*c);
+                    self.cursor = i;
+                    return;
+                } else {
+                    *l = Letter::Miss(*c);
+                }
+            }
+        }
+        self.cursor = self.letters.len();
     }
 
     fn render_textbox(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
@@ -285,7 +317,7 @@ impl TestRenderer {
 
             // render letter
             use Letter::*;
-            match **letter {
+            match *letter {
                 Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
                 Hit(c) => {
                     let char_age = self.cursor as i32 - idx as i32;
@@ -330,8 +362,8 @@ impl TestRenderer {
     /// Counts the number of instances of the `Letter::Hit`.
     fn count_hits(&self) -> usize {
         let mut hits = 0;
-        for l in &self.letters {
-            if let Letter::Hit(_) = **l {
+        for l in &*self.letters {
+            if let Letter::Hit(_) = l {
                 hits += 1;
             }
         }
@@ -341,8 +373,8 @@ impl TestRenderer {
     /// Counts the number of instances of the `Letter::Miss`.
     fn count_misses(&self) -> usize {
         let mut misses = 0;
-        for l in &self.letters {
-            if let Letter::Miss(_) = **l {
+        for l in &*self.letters {
+            if let Letter::Miss(_) = l {
                 misses += 1;
             }
         }
