@@ -75,9 +75,16 @@ impl TestRenderer {
     /// applicable, containing information about performance.
     pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
+        let phrase_length = self.phrase.len();
         self.screen_size = size()?;
         self.text_limit = (
-            (PAD_X, PAD_Y + 2),
+            (
+                (self.screen_size.0 / 2)
+                    .saturating_sub(phrase_length as u16 / 2)
+                    .saturating_sub(PAD_X)
+                    .max(PAD_X),
+                PAD_Y + 2,
+            ),
             (
                 self.screen_size.0 - (PAD_X * 2),
                 config.get_int("test line limit") as u16,
