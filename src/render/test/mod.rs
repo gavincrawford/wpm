@@ -1,7 +1,7 @@
 mod letter;
 mod live_wpm;
-mod mode;
-mod result;
+mod test_mode;
+mod test_result;
 
 use std::{
     io::{stdout, Stdout, Write},
@@ -19,8 +19,8 @@ use crossterm::{
 };
 pub use letter::*;
 use live_wpm::*;
-pub use mode::*;
-pub use result::*;
+pub use test_mode::*;
+pub use test_result::*;
 
 /// Base X padding for the UI.
 const PAD_X: u16 = 4;
