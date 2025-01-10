@@ -71,6 +71,11 @@ impl TestRenderer {
         }
     }
 
+    /// Returns true if the cursor is in bounds of the phrase.
+    fn cursor_in_bounds(&self) -> bool {
+        self.cursor < self.phrase.len()
+    }
+
     /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
     /// applicable, containing information about performance.
     pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
@@ -146,7 +151,7 @@ impl TestRenderer {
 
             // end condition
             if match self.mode {
-                TestMode::Words(_) => self.cursor == self.letters.len(),
+                TestMode::Words(_) => !self.cursor_in_bounds(),
                 TestMode::Time(duration) => {
                     if let Some(timer) = self.timer {
                         timer.elapsed() >= duration
@@ -185,7 +190,7 @@ impl TestRenderer {
         // if the test was ended early, don't give a score
         match self.mode {
             TestMode::Words(_) => {
-                if !(self.cursor == self.phrase.len()) {
+                if self.cursor < self.phrase.len() {
                     return Ok(None);
                 }
             }
@@ -281,14 +286,16 @@ impl TestRenderer {
             .enumerate()
             .skip(self.cursor.saturating_sub(1))
         {
-            if let Letter::Char(c) = l {
-                if *c == ' ' {
-                    *l = Letter::Hit(*c);
+            match l {
+                Letter::Char(' ') => {
+                    *l = Letter::Hit(' ');
                     self.cursor = i;
                     return;
-                } else {
+                }
+                Letter::Char(c) => {
                     *l = Letter::Miss(*c);
                 }
+                _ => {}
             }
         }
         self.cursor = self.letters.len();
