@@ -48,6 +48,8 @@ pub struct TestRenderer {
     screen_size: (u16, u16),
     /// Textbox limits.
     text_limit: ((u16, u16), (u16, u16)),
+    /// Line limit.
+    line_limit: u16,
 }
 
 impl TestRenderer {
@@ -68,6 +70,7 @@ impl TestRenderer {
             cursor: 0,
             screen_size: (0, 0),
             text_limit: ((0, 0), (0, 0)),
+            line_limit: 0,
         }
     }
 
@@ -76,25 +79,28 @@ impl TestRenderer {
         self.cursor < self.phrase.len()
     }
 
-    /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
-    /// applicable, containing information about performance.
-    pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
-        // set up variables for the renderer
-        let phrase_length = self.phrase.len();
+    /// Updates screen size, and resizes text to fit.
+    fn apply_screen_limits(&mut self) -> Result<(), std::io::Error> {
         self.screen_size = size()?;
         self.text_limit = (
             (
                 (self.screen_size.0 / 2)
-                    .saturating_sub(phrase_length as u16 / 2)
+                    .saturating_sub(self.phrase.len() as u16 / 2)
                     .saturating_sub(PAD_X)
                     .max(PAD_X),
                 PAD_Y + 2,
             ),
-            (
-                self.screen_size.0 - (PAD_X * 2),
-                config.get_int("test line limit") as u16,
-            ),
+            (self.screen_size.0 - (PAD_X * 2), self.line_limit),
         );
+        Ok(())
+    }
+
+    /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
+    /// applicable, containing information about performance.
+    pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
+        // set up variables for the renderer
+        self.line_limit = config.get_int("test line limit") as u16;
+        self.apply_screen_limits()?;
         let mut frame_time = Duration::default();
         let mut stdout = stdout(); // stdout handle
         clear(&mut stdout);
@@ -177,6 +183,10 @@ impl TestRenderer {
                             self.handle_key(key);
                         }
                     },
+                    Resize(_, _) => {
+                        clear(&mut stdout);
+                        self.apply_screen_limits()?;
+                    }
                     _ => {}
                 }
             }
