@@ -10,7 +10,7 @@ use crossterm::{
     style::Color,
     terminal::{Clear, ClearType},
 };
-use rand::seq::SliceRandom;
+use rand::prelude::IndexedRandom;
 
 /// Color linear interpolation, returns a Crossterm struct.
 pub fn color_lerp(a: (u8, u8, u8), b: (u8, u8, u8), t: f32) -> Color {
@@ -86,7 +86,7 @@ pub fn str_to_tokens(src: &str) -> Vec<&str> {
 
 /// Select `n` number of tokens to create a random phrase.
 pub fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut str = String::new();
     for _ in 0..n {
         str += tokens.choose(&mut rng).unwrap();
