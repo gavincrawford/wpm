@@ -1,3 +1,4 @@
+mod colorscheme;
 mod menu_action;
 mod menu_element;
 
@@ -10,6 +11,7 @@ use std::{
 
 use super::{test::*, util::*, wordlist::*};
 use crate::{config::ConfigValue, profile::Profile, render::stats::StatsRenderer};
+use colorscheme::*;
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -33,6 +35,8 @@ pub struct MenuRenderer {
     profile: Profile,
     /// Profile path. If not overridden, it will default to "profile".
     profile_path: String,
+    /// Active colorscheme.
+    colorscheme: Colorscheme,
     /// Root menu element.
     root_menu: MenuElement,
     /// True when profile will be saved, false otherwise. Mostly used for testing.
@@ -59,6 +63,8 @@ impl MenuRenderer {
             cursor: vec![0],
             profile,
             profile_path,
+            // TODO make a way to edit/switch colorschemes
+            colorscheme: Colorscheme::default(),
             root_menu: MenuElement::new_menu(
                 "root",
                 vec![
@@ -121,7 +127,7 @@ impl MenuRenderer {
                             ),
                         ],
                         // recents updater
-                        Some(Rc::new(|profile, element| {
+                        Some(Rc::new(|profile, element, _| {
                             // remove old subitems
                             let subitems = element.subitems_mut().unwrap(); // safe unwrap
                             subitems.retain(|v| v.subitems().is_some());
@@ -161,7 +167,7 @@ impl MenuRenderer {
                     MenuElement::new_menu_cb(
                         "settings",
                         vec![],
-                        Some(Rc::new(|profile, element| {
+                        Some(Rc::new(|profile, element, colorscheme| {
                             // get settings items
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
@@ -182,7 +188,11 @@ impl MenuRenderer {
                                     format!(
                                         "{} ({})",
                                         key,
-                                        profile.get_config().get(key).to_string().green()
+                                        profile
+                                            .get_config()
+                                            .get(key)
+                                            .to_string()
+                                            .with(colorscheme.primary)
                                     ),
                                     action,
                                 ))
@@ -213,7 +223,7 @@ impl MenuRenderer {
                 stdout,
                 Hide,
                 MoveTo(0, 0),
-                Print("WPM".on_dark_grey().grey()),
+                Print("WPM".with(self.colorscheme.primary)),
             )?;
             if !self.save {
                 queue!(
@@ -227,7 +237,7 @@ impl MenuRenderer {
                     MoveRight(1),
                     Print(format!(
                         "{} (./{})",
-                        "PROFILE LINKED".on_green().black(),
+                        "PROFILE LINKED".on(self.colorscheme.primary).black(),
                         self.profile_path.clone().grey().bold()
                     )),
                 )?;
@@ -278,7 +288,12 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                    Print(label.clone().dark_green().on_dark_grey()),
+                                    Print(
+                                        label
+                                            .clone()
+                                            .with(self.colorscheme.collapsible)
+                                            .on(self.colorscheme.active_bg)
+                                    ),
                                     MoveToNextLine(1)
                                 )?;
                             } else if this_is_selected {
@@ -286,7 +301,12 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                    Print(label.clone().grey().on_dark_grey()),
+                                    Print(
+                                        label
+                                            .clone()
+                                            .with(self.colorscheme.active_fg)
+                                            .on(self.colorscheme.active_bg)
+                                    ),
                                     MoveToNextLine(1)
                                 )?;
                             } else {
@@ -545,6 +565,7 @@ impl MenuRenderer {
 
     /// Recursively executes all available update callbacks.
     fn execute_all_update_cb(&mut self) -> Result<(), std::io::Error> {
-        self.root_menu.execute_update_cb(&self.profile)
+        self.root_menu
+            .execute_update_cb(&self.profile, &self.colorscheme)
     }
 }
