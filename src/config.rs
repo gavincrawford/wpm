@@ -2,7 +2,6 @@ use crate::render::wordlist::Wordlist;
 use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt::Display;
-use strum::IntoEnumIterator;
 
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
 /// work with completely default settings.

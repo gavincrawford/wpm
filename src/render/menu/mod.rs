@@ -4,7 +4,6 @@ mod menu_element;
 use std::{
     io::{stdout, Write},
     rc::Rc,
-    str::FromStr,
     time::Duration,
 };
 
@@ -383,10 +382,11 @@ impl MenuRenderer {
                         // if the wordlist is present, use it. otherwise, use the one in the
                         // configuration file
                         let wordlist = wordlist.to_owned().unwrap_or(
-                            Wordlist::from_str(
-                                self.profile.get_config().get_select("wordlist").as_str(),
-                            )
-                            .expect("Failed to obtain wordlist from configuration value."),
+                            self.profile
+                                .get_config()
+                                .get_select("wordlist")
+                                .as_str()
+                                .into(),
                         );
 
                         // execute test renderer
