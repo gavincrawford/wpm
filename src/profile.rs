@@ -91,6 +91,6 @@ impl Profile {
     pub fn read_from(file: impl Into<String>) -> Result<Self, std::io::Error> {
         let file = file.into();
         let file = File::open(file)?;
-        Ok(serde_cbor::from_reader(file).expect("Failed to read from CBOR writer."))
+        Ok(serde_cbor::from_reader(file).expect("Failed to read from CBOR reader."))
     }
 }
