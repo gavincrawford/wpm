@@ -52,6 +52,22 @@ impl MenuRenderer {
             Profile::read_from(&profile_path).unwrap_or_default()
         };
 
+        /// Helper macro to create a new `MenuElement` & `MenuAction` for the given test type.
+        macro_rules! action {
+            ($title:expr => $mode:expr, $wordlist:expr) => {
+                MenuElement::new_action(
+                    $title,
+                    MenuAction::Test {
+                        mode: $mode,
+                        wordlist: $wordlist,
+                    },
+                )
+            };
+            ($title:expr => $mode:expr) => {
+                action!($title => $mode, None)
+            };
+        }
+
         // make menu items
         use TestMode::*;
         Self {
@@ -69,54 +85,20 @@ impl MenuRenderer {
                             MenuElement::new_menu(
                                 "words",
                                 vec![
-                                    MenuElement::new_action(
-                                        "words 10",
-                                        MenuAction::Test {
-                                            mode: Words(10),
-                                            wordlist: None,
-                                        },
-                                    ),
-                                    MenuElement::new_action(
-                                        "words 25",
-                                        MenuAction::Test {
-                                            mode: Words(25),
-                                            wordlist: None,
-                                        },
-                                    ),
-                                    MenuElement::new_action(
-                                        "words 50",
-                                        MenuAction::Test {
-                                            mode: Words(50),
-                                            wordlist: None,
-                                        },
-                                    ),
+                                    action!("words 10" => Words(10)),
+                                    action!("words 25" => Words(25)),
+                                    action!("words 50" => Words(50)),
+                                    action!("words 100" => Words(100)),
                                 ],
                             ),
                             // time
                             MenuElement::new_menu(
                                 "time",
                                 vec![
-                                    MenuElement::new_action(
-                                        "time 10s",
-                                        MenuAction::Test {
-                                            mode: Time(Duration::from_secs(10)),
-                                            wordlist: None,
-                                        },
-                                    ),
-                                    MenuElement::new_action(
-                                        "time 30s",
-                                        MenuAction::Test {
-                                            mode: Time(Duration::from_secs(30)),
-                                            wordlist: None,
-                                        },
-                                    ),
-                                    MenuElement::new_action(
-                                        "time 1m",
-                                        MenuAction::Test {
-                                            mode: Time(Duration::from_secs(60)),
-                                            wordlist: None,
-                                        },
-                                    ),
+                                    action!("time 10s" => Time(Duration::from_secs(10))),
+                                    action!("time 30s" => Time(Duration::from_secs(30))),
+                                    action!("time 60s" => Time(Duration::from_secs(60))),
+                                    action!("time 120s" => Time(Duration::from_secs(120))),
                                 ],
                             ),
                         ],
@@ -138,14 +120,11 @@ impl MenuRenderer {
                                         .take(profile.get_config().get_int("recent test count")
                                             as usize)
                                 {
-                                    recents.push(MenuElement::new_action_cb(
-                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
-                                        MenuAction::Test {
-                                            mode: entry.mode.clone(),
-                                            wordlist: Some(entry.wordlist.to_owned()),
-                                        },
-                                        None,
-                                    ))
+                                    recents.push(action!(
+                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist) =>
+                                        entry.mode.clone(),
+                                        Some(entry.wordlist.to_owned())
+                                    ));
                                 }
 
                                 // add them to element subitems
@@ -168,15 +147,8 @@ impl MenuRenderer {
                                 use ConfigValue::*;
                                 let action = match value {
                                     Bool(_) => MenuAction::CfgToggle(key.clone()),
-                                    Integer {
-                                        v: _,
-                                        max: _,
-                                        min: _,
-                                    } => MenuAction::CfgIncrement(key.clone()),
-                                    Select {
-                                        options: _,
-                                        selected: _,
-                                    } => MenuAction::CfgIncrement(key.clone()),
+                                    Integer { .. } => MenuAction::CfgIncrement(key.clone()),
+                                    Select { .. } => MenuAction::CfgIncrement(key.clone()),
                                 };
                                 settings.push(MenuElement::new_action(
                                     format!(

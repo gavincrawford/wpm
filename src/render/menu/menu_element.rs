@@ -32,20 +32,6 @@ impl MenuElement {
         }
     }
 
-    /// Creates a `MenuElement` that utilizes an action. Uses an update callback.
-    pub fn new_action_cb(
-        label: impl Into<String>,
-        action: MenuAction,
-        update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
-    ) -> Self {
-        Self {
-            label: label.into(),
-            subitems: None,
-            update_cb,
-            action,
-        }
-    }
-
     /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu.
     pub fn new_menu(label: impl Into<String>, subitems: Vec<MenuElement>) -> Self {
         Self {
