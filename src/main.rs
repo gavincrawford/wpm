@@ -46,5 +46,5 @@ fn main() -> Result<(), std::io::Error> {
 fn panic_handler(info: &PanicHookInfo) {
     disable_raw_mode().unwrap();
     queue!(stdout(), Show).unwrap();
-    println!("{}", info);
+    println!("{info}");
 }

@@ -56,9 +56,7 @@ impl Profile {
             self.stats.average_net_wpm = 0.;
             self.stats.pb = 0.;
         } else {
-            let mut gross_sum = 0.;
-            let mut net_sum = 0.;
-            let mut max_wpm = 0.;
+            let (mut gross_sum, mut net_sum, mut max_wpm) = (0., 0., 0.);
             for test in &self.history {
                 // add to averages
                 gross_sum += test.wpm.0;
@@ -84,7 +82,8 @@ impl Profile {
     pub fn write_to(&self, file: impl Into<String>) -> Result<(), std::io::Error> {
         let file = file.into();
         let file = File::create(file)?;
-        Ok(serde_cbor::to_writer(file, &self).expect("Failed to write to CBOR writer."))
+        serde_cbor::to_writer(file, &self).expect("Failed to write to CBOR writer.");
+        Ok(())
     }
 
     /// Read the profile at the provided file path.

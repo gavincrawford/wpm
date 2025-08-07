@@ -115,7 +115,7 @@ impl TestRenderer {
 
             // render performance indicator
             if config.get_bool("show performance indicator") {
-                let perf_factor = (frame_time.as_secs_f32() / 0.1) as f32;
+                let perf_factor = frame_time.as_secs_f32() / 0.1;
                 queue!(
                     stdout,
                     MoveRight(1),
@@ -231,7 +231,7 @@ impl TestRenderer {
         // create test result
         let result = TestResult::new(
             self.phrase.split_whitespace().count(),
-            self.wordlist.clone(),
+            self.wordlist,
             self.mode.clone(),
             self.count_hits(),
             self.count_misses(),
@@ -331,7 +331,7 @@ impl TestRenderer {
                 queue!(
                     stdout,
                     MoveTo(
-                        (self.screen_size.0 / 2) as u16,
+                        self.screen_size.0 / 2,
                         self.text_limit.0 .1 + lines_on_screen
                     ),
                     Print("...")

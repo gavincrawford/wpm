@@ -12,7 +12,7 @@ impl Display for TestMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use TestMode::*;
         match *self {
-            Words(count) => write!(f, "words {}", count),
+            Words(count) => write!(f, "words {count}"),
             Time(time) => write!(f, "time {}s", time.as_secs()),
         }
     }

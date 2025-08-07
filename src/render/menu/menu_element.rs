@@ -58,13 +58,8 @@ impl MenuElement {
         // update all children
         if let Some(subitems) = &mut self.subitems {
             subitems.iter_mut().for_each(|element| {
-                element.execute_update_cb(profile).expect(
-                    format!(
-                        "Failed to execute child('{}') update callback of  parent('{}').",
-                        element.label, self.label
-                    )
-                    .as_str(),
-                );
+                element.execute_update_cb(profile).unwrap_or_else(|_| panic!("Failed to execute child('{}') update callback of  parent('{}').",
+                        element.label, self.label));
             })
         }
 

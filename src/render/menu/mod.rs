@@ -214,14 +214,12 @@ impl MenuRenderer {
                 .clamp(
                     &0,
                     // prevent the cursor from leaving the subitems of the current menu
-                    &(menus
+                    &menus
                         .last()
                         .unwrap()
                         .subitems()
                         .unwrap()
-                        .len()
-                        .checked_sub(1)
-                        .unwrap_or(0)),
+                        .len().saturating_sub(1),
                 );
             let mut this_max_x: usize = 0; // the longest line of this render cycle
             let mut last_max_x: usize = 0; // the longest line of the last render cycle
@@ -367,127 +365,128 @@ impl MenuRenderer {
     /// Processes a selection at the current cursor position stored within `self`. This function
     /// processes things like menu navigation, starting typing sessions, and opening views.
     fn select_at_cursor(&mut self) -> Result<(), std::io::Error> {
-        Ok(
-            if let Some(e) = self
-                .get_menus_from_cursor()
-                .last()
-                .unwrap()
-                .subitems()
-                .unwrap()
-                .get(*self.cursor.last().unwrap())
-            {
-                use MenuAction::*;
-                match &e.action() {
-                    Test { mode, wordlist } => {
-                        // if the wordlist is present, use it. otherwise, use the one in the
-                        // configuration file
-                        let wordlist = wordlist.to_owned().unwrap_or(
-                            self.profile
-                                .get_config()
-                                .get_select("wordlist")
-                                .as_str()
-                                .into(),
-                        );
+        if let Some(e) = self
+            .get_menus_from_cursor()
+            .last()
+            .unwrap()
+            .subitems()
+            .unwrap()
+            .get(*self.cursor.last().unwrap())
+        {
+            use MenuAction::*;
+            match &e.action() {
+                Test { mode, wordlist } => {
+                    // if the wordlist is present, use it. otherwise, use the one in the
+                    // configuration file
+                    let wordlist = wordlist.to_owned().unwrap_or(
+                        self.profile
+                            .get_config()
+                            .get_select("wordlist")
+                            .as_str()
+                            .into(),
+                    );
 
-                        // execute test renderer
-                        let content = wordlist.as_content();
-                        let tokens: Vec<&str> = str_to_tokens(content.as_str());
-                        let phrase = match mode {
-                            TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
-                            TestMode::Time(_) => tokens_to_phrase(100, &tokens),
-                        };
-                        let result = TestRenderer::new(wordlist.clone(), phrase, mode.to_owned())
-                            .render(self.profile.get_config())?;
+                    // execute test renderer
+                    let content = wordlist.as_content();
+                    let tokens: Vec<&str> = str_to_tokens(content.as_str());
+                    let phrase = match mode {
+                        TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
+                        TestMode::Time(_) => tokens_to_phrase(100, &tokens),
+                    };
+                    let result = TestRenderer::new(wordlist, phrase, mode.to_owned())
+                        .render(self.profile.get_config())?;
 
-                        // if user abandoned test, we're done here
-                        if result.is_none() {
-                            return Ok(());
-                        }
+                    // if user abandoned test, we're done here
+                    if result.is_none() {
+                        return Ok(());
+                    }
 
-                        // temporarily show results before continuing
-                        let result = result.unwrap(); // safety above
-                        let mut stdout = stdout();
+                    // temporarily show results before continuing
+                    let result = result.unwrap(); // safety above
+                    let mut stdout = stdout();
+                    queue!(
+                        // basic initial stats
+                        stdout,
+                        Print(format!("GROSS: {:.2} wpm", result.wpm.0)),
+                        MoveToNextLine(1),
+                        Print(format!(
+                            "NET:   {:.2}wpm ({}X)",
+                            result.wpm.1, result.misses,
+                        )),
+                        MoveToNextLine(1),
+                    )?;
+                    if result.wpm.1 > self.profile.get_stats().pb {
                         queue!(
-                            // basic initial stats
                             stdout,
-                            Print(format!("GROSS: {:.2} wpm", result.wpm.0)),
-                            MoveToNextLine(1),
-                            Print(format!(
-                                "NET:   {:.2}wpm ({}X)",
-                                result.wpm.1, result.misses,
-                            )),
+                            Print(format!("{} {}", "".yellow(), "new pb!".italic())),
                             MoveToNextLine(1),
                         )?;
-                        if result.wpm.1 > self.profile.get_stats().pb {
-                            queue!(
-                                stdout,
-                                Print(format!("{} {}", "".yellow(), "new pb!".italic())),
-                                MoveToNextLine(1),
-                            )?;
-                        }
-                        queue!(
-                            // continue message
-                            stdout,
-                            MoveToNextLine(1),
-                            Print("Press enter to continue.".italic())
-                        )?;
-                        stdout.flush()?;
-                        wait_until_enter(Some(Duration::from_secs(10)));
+                    }
+                    queue!(
+                        // continue message
+                        stdout,
+                        MoveToNextLine(1),
+                        Print("Press enter to continue.".italic())
+                    )?;
+                    stdout.flush()?;
+                    wait_until_enter(Some(Duration::from_secs(10)));
 
-                        // otherwise, add test record to profile
-                        self.profile.record(result);
-                        self.profile.update_stats();
-                    }
-                    Profile => StatsRenderer::new(&self.profile).render()?,
-                    CfgToggle(v) => {
-                        let key = v.to_owned();
-                        let cfg = self.profile.get_config_mut();
-                        cfg.set(key.clone(), ConfigValue::Bool(!cfg.get_bool(key.clone())));
-                    }
-                    CfgIncrement(v) => {
-                        let key = v.to_owned();
-                        let cfg = self.profile.get_config_mut();
-                        match cfg.get(key.clone()).to_owned() {
-                            ConfigValue::Integer { v, max, min } => {
-                                if (v + 1) > max {
-                                    cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
-                                } else {
-                                    cfg.set(
-                                        key.clone(),
-                                        ConfigValue::Integer { v: v + 1, max, min },
-                                    );
-                                }
+                    // otherwise, add test record to profile
+                    self.profile.record(result);
+                    self.profile.update_stats();
+                }
+                Profile => StatsRenderer::new(&self.profile).render()?,
+                CfgToggle(v) => {
+                    let key = v.to_owned();
+                    let cfg = self.profile.get_config_mut();
+                    cfg.set(key.clone(), ConfigValue::Bool(!cfg.get_bool(key.clone())));
+                }
+                CfgIncrement(v) => {
+                    let key = v.to_owned();
+                    let cfg = self.profile.get_config_mut();
+                    match cfg.get(key.clone()).to_owned() {
+                        ConfigValue::Integer { v, max, min } => {
+                            if (v + 1) > max {
+                                cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
+                            } else {
+                                cfg.set(
+                                    key.clone(),
+                                    ConfigValue::Integer { v: v + 1, max, min },
+                                );
                             }
-                            ConfigValue::Select { options, selected } => {
-                                if (selected + 2) > options.len() {
-                                    cfg.set(
-                                        key.clone(),
-                                        ConfigValue::Select {
-                                            options,
-                                            selected: 0,
-                                        },
-                                    );
-                                } else {
-                                    cfg.set(
-                                        key.clone(),
-                                        ConfigValue::Select {
-                                            options,
-                                            selected: selected + 1,
-                                        },
-                                    );
-                                }
+                        }
+                        ConfigValue::Select { options, selected } => {
+                            if (selected + 2) > options.len() {
+                                cfg.set(
+                                    key.clone(),
+                                    ConfigValue::Select {
+                                        options,
+                                        selected: 0,
+                                    },
+                                );
+                            } else {
+                                cfg.set(
+                                    key.clone(),
+                                    ConfigValue::Select {
+                                        options,
+                                        selected: selected + 1,
+                                    },
+                                );
                             }
-                            _ => {}
                         }
-                    }
-                    _ => {
-                        // if this item is a subitem, open it by pushing a new cursor
-                        if e.subitems().is_some() {
-                            self.cursor.push(0);
-                        }
+                        _ => {}
                     }
                 }
-            },
+                _ => {
+                    // if this item is a subitem, open it by pushing a new cursor
+                    if e.subitems().is_some() {
+                        self.cursor.push(0);
+                    }
+                }
+            }
+        };
+        Ok(
+            (),
         )
     }
 

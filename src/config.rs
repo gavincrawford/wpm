@@ -37,7 +37,7 @@ impl Default for Config {
             (
                 "wordlist".into(),
                 Select {
-                    options: Wordlist::iter().map(|v| format!("{:?}", v)).collect(),
+                    options: Wordlist::iter().map(|v| format!("{v:?}")).collect(),
                     selected: 0,
                 },
             ),
@@ -56,7 +56,7 @@ impl Config {
         let key = key.into();
         self.map
             .get(&key)
-            .expect(format!("no element '{}' found in configuration map", key).as_str())
+            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
     }
 
     /// Get config values by key, select only. Will panic if called on other variants.
@@ -65,11 +65,11 @@ impl Config {
         if let ConfigValue::Select { options, selected } = self
             .map
             .get(&key)
-            .expect(format!("no element '{}' found in configuration map", key).as_str())
+            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
         {
             options
                 .get(*selected)
-                .expect(format!("option at position {selected} not found").as_str())
+                .unwrap_or_else(|| panic!("option at position {selected} not found"))
                 .to_owned()
         } else {
             panic!("get_bool called on non-boolean configuration item");
@@ -82,7 +82,7 @@ impl Config {
         if let ConfigValue::Bool(v) = self
             .map
             .get(&key)
-            .expect(format!("no element '{}' found in configuration map", key).as_str())
+            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
         {
             v.to_owned()
         } else {
@@ -96,7 +96,7 @@ impl Config {
         if let ConfigValue::Integer { v, max: _, min: _ } = self
             .map
             .get(&key)
-            .expect(format!("no element '{}' found in configuration map", key).as_str())
+            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
         {
             v.to_owned()
         } else {
@@ -110,7 +110,7 @@ impl Config {
         let value = value.into();
         self.map
             .insert(key.clone(), value.clone())
-            .expect(format!("failed to set config value '{}' to '{:?}'", key, value).as_str());
+            .unwrap_or_else(|| panic!("failed to set config value '{key}' to '{value:?}'"));
     }
 }
 
@@ -133,14 +133,14 @@ impl Display for ConfigValue {
         use ConfigValue::*;
         match self {
             Bool(v) => {
-                write!(f, "{}", v.to_string())
+                write!(f, "{v}")
             }
-            Integer { v, max: _, min: _ } => write!(f, "{}", v.to_string()),
+            Integer { v, max: _, min: _ } => write!(f, "{v}"),
             Select { options, selected } => {
                 let v = options
                     .get(*selected)
                     .expect("Selected index outside of range.");
-                write!(f, "{}", v)
+                write!(f, "{v}")
             }
         }
     }

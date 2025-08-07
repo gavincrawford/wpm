@@ -32,9 +32,8 @@ impl<'a> StatsRenderer<'a> {
         clear(&mut stdout);
 
         // first, make sure history isn't too short
-        if history.len() == 0 {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+        if history.is_empty() {
+            return Err(std::io::Error::other(
                 "No history to display.",
             ));
         }
@@ -58,11 +57,11 @@ impl<'a> StatsRenderer<'a> {
                 // plot the average wpm with a exponential smoothing function
                 if x > 1. {
                     let delta: f32 = (x % 1.).powf(2_f32);
-                    let last_step = history.get(x as usize - 1).unwrap().wpm.1 as f32;
-                    let this_step = history.get(x as usize).unwrap().wpm.1 as f32;
+                    let last_step = history.get(x as usize - 1).unwrap().wpm.1;
+                    let this_step = history.get(x as usize).unwrap().wpm.1;
                     last_step * (1.0 - delta) + this_step * delta
                 } else {
-                    history.get(0).unwrap().wpm.1
+                    history.first().unwrap().wpm.1
                 }
             })),
             RGB {
@@ -80,7 +79,7 @@ impl<'a> StatsRenderer<'a> {
                     let this_step = self.avg_of_five(x as usize);
                     last_step * (1.0 - delta) + this_step * delta
                 } else {
-                    history.get(0).unwrap().wpm.1
+                    history.first().unwrap().wpm.1
                 }
             })),
             RGB {
