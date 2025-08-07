@@ -17,6 +17,21 @@ macro_rules! wordlist {
             pub fn iter() -> impl Iterator<Item = Self> {
                 [$(Self::$variant),*].iter().copied()
             }
+
+            /// Converts enum to wordlist content.
+            pub fn as_content(&self) -> String {
+                use super::wordlist::*;
+                let mut decoder = match self {
+                    $(
+                        Wordlist::$variant => GzDecoder::new(&$content[..])
+                    ),*
+                };
+                let mut buf = String::new();
+                decoder
+                    .read_to_string(&mut buf)
+                    .expect("Failed to decompress requested wordlist.");
+                buf
+            }
         }
 
         impl From<&str> for Wordlist {
@@ -26,21 +41,6 @@ macro_rules! wordlist {
                     _ => panic!("Unknown variant: {}", s)
                 }
             }
-        }
-
-        /// Converts enum to wordlist content.
-        pub fn get_wordlist_content(wordlist: &Wordlist) -> String {
-            use super::wordlist::*;
-            let mut decoder = match wordlist {
-                $(
-                    Wordlist::$variant => GzDecoder::new(&$content[..])
-                ),*
-            };
-            let mut buf = String::new();
-            decoder
-                .read_to_string(&mut buf)
-                .expect("Failed to decompress requested wordlist.");
-            buf
         }
     };
 }
