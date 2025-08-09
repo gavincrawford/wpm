@@ -33,9 +33,7 @@ impl<'a> StatsRenderer<'a> {
 
         // first, make sure history isn't too short
         if history.is_empty() {
-            return Err(std::io::Error::other(
-                "No history to display.",
-            ));
+            return Err(std::io::Error::other("No history to display."));
         }
 
         // gross wpm chart

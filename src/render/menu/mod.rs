@@ -122,7 +122,7 @@ impl MenuRenderer {
                                     recents.push(MenuElement::new_test(
                                         format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         entry.mode.clone(),
-                                        Some(entry.wordlist.clone()),
+                                        Some(entry.wordlist),
                                     ));
                                 }
 
@@ -219,7 +219,8 @@ impl MenuRenderer {
                         .unwrap()
                         .subitems()
                         .unwrap()
-                        .len().saturating_sub(1),
+                        .len()
+                        .saturating_sub(1),
                 );
             let mut this_max_x: usize = 0; // the longest line of this render cycle
             let mut last_max_x: usize = 0; // the longest line of the last render cycle
@@ -449,10 +450,7 @@ impl MenuRenderer {
                             if (v + 1) > max {
                                 cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
                             } else {
-                                cfg.set(
-                                    key.clone(),
-                                    ConfigValue::Integer { v: v + 1, max, min },
-                                );
+                                cfg.set(key.clone(), ConfigValue::Integer { v: v + 1, max, min });
                             }
                         }
                         ConfigValue::Select { options, selected } => {
@@ -485,9 +483,7 @@ impl MenuRenderer {
                 }
             }
         };
-        Ok(
-            (),
-        )
+        Ok(())
     }
 
     /// Get menus from cursor position.
