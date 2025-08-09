@@ -129,7 +129,7 @@ impl<'a> StatsRenderer<'a> {
         let range = x.saturating_sub(4)..=x;
         let size = range.size_hint();
         range
-            .filter_map(|i| Some(self.profile.get_history().get(i).unwrap().wpm.1))
+            .map(|i| self.profile.get_history().get(i).unwrap().wpm.1)
             .sum::<f32>()
             / size.0 as f32
     }
