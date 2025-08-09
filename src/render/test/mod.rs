@@ -39,7 +39,7 @@ pub struct TestRenderer {
     /// Phrase the user will be tested on.
     phrase: String,
     /// Letters of the selected phrase.
-    letters: Box<Vec<Letter>>,
+    letters: Vec<Letter>,
     /// Test timer.
     timer: Option<Instant>,
     /// Cursor position.
@@ -59,13 +59,11 @@ impl TestRenderer {
             wordlist,
             mode,
             phrase: phrase.clone(),
-            letters: Box::from(
-                phrase
-                    .as_bytes()
-                    .iter()
-                    .map(|c| Letter::Char(*c as char))
-                    .collect::<Vec<Letter>>(),
-            ),
+            letters: phrase
+                .as_bytes()
+                .iter()
+                .map(|c| Letter::Char(*c as char))
+                .collect::<Vec<Letter>>(),
             timer: None,
             cursor: 0,
             screen_size: (0, 0),
