@@ -60,7 +60,7 @@ impl Config {
     }
 
     /// Get config values by key, select only. Will panic if called on other variants.
-    pub fn get_select(&self, key: impl Into<String>) -> String {
+    pub fn get_select(&self, key: impl Into<String>) -> &str {
         let key = key.into();
         if let ConfigValue::Select { options, selected } = self
             .map
@@ -70,7 +70,6 @@ impl Config {
             options
                 .get(*selected)
                 .unwrap_or_else(|| panic!("option at position {selected} not found"))
-                .to_owned()
         } else {
             panic!("get_bool called on non-boolean configuration item");
         }

@@ -379,13 +379,9 @@ impl MenuRenderer {
                 Test { mode, wordlist } => {
                     // if the wordlist is present, use it. otherwise, use the one in the
                     // configuration file
-                    let wordlist = wordlist.to_owned().unwrap_or(
-                        self.profile
-                            .get_config()
-                            .get_select("wordlist")
-                            .as_str()
-                            .into(),
-                    );
+                    let wordlist = wordlist
+                        .to_owned()
+                        .unwrap_or(self.profile.get_config().get_select("wordlist").into());
 
                     // execute test renderer
                     let content = wordlist.as_content();
