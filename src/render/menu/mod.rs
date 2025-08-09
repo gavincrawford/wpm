@@ -51,22 +51,6 @@ impl MenuRenderer {
             Profile::read_from(&profile_path).unwrap_or_default()
         };
 
-        /// Helper macro to create a new `MenuElement` & `MenuAction` for the given test type.
-        macro_rules! action {
-            ($title:expr => $mode:expr, $wordlist:expr) => {
-                MenuElement::new_action(
-                    $title,
-                    MenuAction::Test {
-                        mode: $mode,
-                        wordlist: $wordlist,
-                    },
-                )
-            };
-            ($title:expr => $mode:expr) => {
-                action!($title => $mode, None)
-            };
-        }
-
         // make menu items
         use TestMode::*;
         Self {
@@ -84,20 +68,36 @@ impl MenuRenderer {
                             MenuElement::new_menu(
                                 "words",
                                 vec![
-                                    action!("words 10" => Words(10)),
-                                    action!("words 25" => Words(25)),
-                                    action!("words 50" => Words(50)),
-                                    action!("words 100" => Words(100)),
+                                    MenuElement::new_test("words 10", Words(10), None),
+                                    MenuElement::new_test("words 25", Words(25), None),
+                                    MenuElement::new_test("words 50", Words(50), None),
+                                    MenuElement::new_test("words 100", Words(100), None),
                                 ],
                             ),
                             // time
                             MenuElement::new_menu(
                                 "time",
                                 vec![
-                                    action!("time 10s" => Time(Duration::from_secs(10))),
-                                    action!("time 30s" => Time(Duration::from_secs(30))),
-                                    action!("time 60s" => Time(Duration::from_secs(60))),
-                                    action!("time 120s" => Time(Duration::from_secs(120))),
+                                    MenuElement::new_test(
+                                        "time 10s",
+                                        Time(Duration::from_secs(10)),
+                                        None,
+                                    ),
+                                    MenuElement::new_test(
+                                        "time 30s",
+                                        Time(Duration::from_secs(30)),
+                                        None,
+                                    ),
+                                    MenuElement::new_test(
+                                        "time 60s",
+                                        Time(Duration::from_secs(60)),
+                                        None,
+                                    ),
+                                    MenuElement::new_test(
+                                        "time 120s",
+                                        Time(Duration::from_secs(120)),
+                                        None,
+                                    ),
                                 ],
                             ),
                         ],
@@ -119,10 +119,10 @@ impl MenuRenderer {
                                         .take(profile.get_config().get_int("recent test count")
                                             as usize)
                                 {
-                                    recents.push(action!(
-                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist) =>
+                                    recents.push(MenuElement::new_test(
+                                        format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         entry.mode.clone(),
-                                        Some(entry.wordlist.to_owned())
+                                        Some(entry.wordlist.clone()),
                                     ));
                                 }
 

@@ -52,6 +52,12 @@ impl MenuElement {
         }
     }
 
+    /// Creates a `MenuElement` that utilizes a test action.
+    /// If `wordlist` parameter is `None`, will use config default.
+    pub fn new_test(label: impl Into<String>, mode: TestMode, wordlist: Option<Wordlist>) -> Self {
+        Self::new_action(label, MenuAction::Test { mode, wordlist })
+    }
+
     /// Execute on-render callback for this element.
     /// Running an update callback will recursively update all children.
     pub fn execute_update_cb(&mut self, profile: &Profile) -> Result<(), std::io::Error> {
