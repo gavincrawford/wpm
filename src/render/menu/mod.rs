@@ -111,14 +111,7 @@ impl MenuRenderer {
                             if profile.get_config().get_bool("show recent tests") {
                                 // get recent plays
                                 let mut recents = vec![];
-                                for entry in
-                                    profile
-                                        .get_history()
-                                        .iter()
-                                        .rev()
-                                        .take(profile.get_config().get_int("recent test count")
-                                            as usize)
-                                {
+                                for entry in profile.get_recent() {
                                     recents.push(MenuElement::new_test(
                                         format!("󰕍 {} ({:?})", entry.mode, entry.wordlist),
                                         entry.mode.clone(),

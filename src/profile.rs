@@ -45,6 +45,12 @@ impl Profile {
         &self.history
     }
 
+    /// Get the last `n` test records, where `n` is specified by the current configuration.
+    pub fn get_recent(&self) -> Vec<&TestResult> {
+        let n = self.config.get_int("recent test count") as usize;
+        self.history.iter().rev().take(n).collect()
+    }
+
     /// Update this profile's statistics.
     pub fn update_stats(&mut self) {
         // total tests
