@@ -442,31 +442,19 @@ impl MenuRenderer {
                 CfgIncrement(key) => {
                     let mut profile = self.profile.borrow_mut();
                     let cfg = profile.get_config_mut();
-                    match cfg.get(key).to_owned() {
+                    match cfg.get_mut(key) {
                         ConfigValue::Integer { v, max, min } => {
-                            if (v + 1) > max {
-                                cfg.set(key, ConfigValue::Integer { v: min, max, min });
+                            if *v + 1 > *max {
+                                *v = *min;
                             } else {
-                                cfg.set(key, ConfigValue::Integer { v: v + 1, max, min });
+                                *v = *v + 1
                             }
                         }
                         ConfigValue::Select { options, selected } => {
-                            if (selected + 2) > options.len() {
-                                cfg.set(
-                                    key,
-                                    ConfigValue::Select {
-                                        options,
-                                        selected: 0,
-                                    },
-                                );
+                            if *selected + 2 > options.len() {
+                                *selected = 0;
                             } else {
-                                cfg.set(
-                                    key,
-                                    ConfigValue::Select {
-                                        options,
-                                        selected: selected + 1,
-                                    },
-                                );
+                                *selected = *selected + 1;
                             }
                         }
                         _ => {}

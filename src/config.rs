@@ -59,6 +59,16 @@ impl Config {
             .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
     }
 
+    /// Get raw config values by key. Mutable.
+    pub fn get_mut(&mut self, key: impl AsRef<str>) -> &mut ConfigValue {
+        let key = key.as_ref();
+        if let Some(value) = self.map.get_mut(key) {
+            value
+        } else {
+            panic!("no element '{key}' found in configuration map")
+        }
+    }
+
     /// Get config values by key, select only. Will panic if called on other variants.
     pub fn get_select(&self, key: impl Into<String>) -> &str {
         let key = key.into();
