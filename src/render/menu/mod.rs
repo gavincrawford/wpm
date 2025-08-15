@@ -512,3 +512,85 @@ impl MenuRenderer {
         self.root_menu.execute_update_cb(&self.profile.borrow())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    /// Creates a test MenuRenderer that is configured to no-profile mode
+    fn create_test_menu_renderer() -> MenuRenderer {
+        MenuRenderer::new(None)
+    }
+
+    #[test]
+    fn test_basic_nav() {
+        let mut renderer = create_test_menu_renderer();
+        let key_event = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
+        assert!(renderer.handle_key(key_event).is_ok() && renderer.cursor.last() == Some(&1));
+        let key_event = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::NONE);
+        assert!(renderer.handle_key(key_event).is_ok() && renderer.cursor.last() == Some(&2));
+        let key_event = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
+        assert!(renderer.handle_key(key_event).is_ok() && renderer.cursor.last() == Some(&1));
+        let key_event = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
+        assert!(renderer.handle_key(key_event).is_ok() && renderer.cursor.last() == Some(&0));
+        let key_event = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+        assert!(renderer.handle_key(key_event).is_ok());
+    }
+
+    #[test]
+    fn test_nav_bounds() {
+        let mut renderer = create_test_menu_renderer();
+
+        // Up x25
+        for _ in 0..25 {
+            let key_event = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
+            let result = renderer.handle_key(key_event);
+            assert!(result.is_ok());
+        }
+
+        // Down x25
+        for _ in 0..25 {
+            let key_event = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
+            let result = renderer.handle_key(key_event);
+            assert!(result.is_ok());
+        }
+    }
+
+    #[test]
+    fn test_full_nav() {
+        let mut renderer = create_test_menu_renderer();
+
+        // Navigate to first submenu (type menu)
+        let enter_key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+        let result = renderer.handle_key(enter_key);
+        assert!(result.is_ok());
+
+        // Should now be in the "type" submenu
+        assert_eq!(renderer.cursor.len(), 2);
+
+        // Navigate within submenu
+        let down_key = KeyEvent::new(KeyCode::Down, KeyModifiers::NONE);
+        let result = renderer.handle_key(down_key);
+        assert!(result.is_ok());
+
+        // Enter another submenu
+        let enter_key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+        let result = renderer.handle_key(enter_key);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_menus_from_cursor() {
+        let renderer = create_test_menu_renderer();
+        let menus = renderer.get_menus_from_cursor();
+        assert!(!menus.is_empty());
+    }
+
+    #[test]
+    fn test_cb_update() {
+        let mut renderer = create_test_menu_renderer();
+        let result = renderer.execute_all_update_cb();
+        assert!(result.is_ok());
+    }
+}
