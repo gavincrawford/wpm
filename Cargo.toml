@@ -1,6 +1,6 @@
 [package]
 name = "wpm"
-version = "0.10.17"
+version = "0.10.18"
 edition = "2021"
 
 [dependencies]

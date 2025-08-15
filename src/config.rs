@@ -52,10 +52,10 @@ impl Default for Config {
 
 impl Config {
     /// Get raw config values by key.
-    pub fn get(&self, key: impl Into<String>) -> &ConfigValue {
-        let key = key.into();
+    pub fn get(&self, key: impl AsRef<str>) -> &ConfigValue {
+        let key = key.as_ref();
         self.map
-            .get(&key)
+            .get(key)
             .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
     }
 
@@ -76,11 +76,11 @@ impl Config {
     }
 
     /// Get config values by key, boolean only. Will panic if called on other variants.
-    pub fn get_bool(&self, key: impl Into<String>) -> bool {
-        let key = key.into();
+    pub fn get_bool(&self, key: impl AsRef<str>) -> bool {
+        let key = key.as_ref();
         if let ConfigValue::Bool(v) = self
             .map
-            .get(&key)
+            .get(key)
             .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
         {
             v.to_owned()
@@ -90,11 +90,11 @@ impl Config {
     }
 
     /// Get config values by key, integer only. Will panic if called on other variants.
-    pub fn get_int(&self, key: impl Into<String>) -> i32 {
-        let key = key.into();
+    pub fn get_int(&self, key: impl AsRef<str>) -> i32 {
+        let key = key.as_ref();
         if let ConfigValue::Integer { v, max: _, min: _ } = self
             .map
-            .get(&key)
+            .get(key)
             .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
         {
             v.to_owned()

@@ -2,6 +2,7 @@ mod menu_action;
 mod menu_element;
 
 use std::{
+    cell::RefCell,
     io::{stdout, Write},
     rc::Rc,
     time::Duration,
@@ -29,7 +30,7 @@ pub struct MenuRenderer {
     /// Selected menu option for each menu currently open.
     cursor: Vec<usize>,
     /// Active profile.
-    profile: Profile,
+    profile: RefCell<Profile>,
     /// Profile path. If not overridden, it will default to "profile".
     profile_path: String,
     /// Root menu element.
@@ -49,7 +50,8 @@ impl MenuRenderer {
             Profile::default()
         } else {
             Profile::read_from(&profile_path).unwrap_or_default()
-        };
+        }
+        .into();
 
         // make menu items
         use TestMode::*;
@@ -162,7 +164,7 @@ impl MenuRenderer {
     /// Renders the menu util exited or a test is started.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
         // update profile stats, just in case
-        self.profile.update_stats();
+        self.profile.borrow_mut().update_stats();
 
         // get stdout handle
         let mut stdout = stdout();
@@ -311,6 +313,7 @@ impl MenuRenderer {
                             } else {
                                 if self.save {
                                     self.profile
+                                        .borrow_mut()
                                         .write_to(self.profile_path.clone())
                                         .expect("Failed to write profile.");
                                 }
@@ -372,9 +375,13 @@ impl MenuRenderer {
                 Test { mode, wordlist } => {
                     // if the wordlist is present, use it. otherwise, use the one in the
                     // configuration file
-                    let wordlist = wordlist
-                        .to_owned()
-                        .unwrap_or(self.profile.get_config().get_select("wordlist").into());
+                    let wordlist = wordlist.to_owned().unwrap_or(
+                        self.profile
+                            .borrow()
+                            .get_config()
+                            .get_select("wordlist")
+                            .into(),
+                    );
 
                     // execute test renderer
                     let content = wordlist.as_content();
@@ -383,8 +390,9 @@ impl MenuRenderer {
                         TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
                         TestMode::Time(_) => tokens_to_phrase(100, &tokens),
                     };
+                    let mut profile = self.profile.borrow_mut();
                     let result = TestRenderer::new(wordlist, phrase, mode.to_owned())
-                        .render(self.profile.get_config())?;
+                        .render(profile.get_config())?;
 
                     // if user abandoned test, we're done here
                     if result.is_none() {
@@ -405,7 +413,7 @@ impl MenuRenderer {
                         )),
                         MoveToNextLine(1),
                     )?;
-                    if result.wpm.1 > self.profile.get_stats().pb {
+                    if result.wpm.1 > profile.get_stats().pb {
                         queue!(
                             stdout,
                             Print(format!("{} {}", "".yellow(), "new pb!".italic())),
@@ -422,30 +430,30 @@ impl MenuRenderer {
                     wait_until_enter(Some(Duration::from_secs(10)));
 
                     // otherwise, add test record to profile
-                    self.profile.record(result);
-                    self.profile.update_stats();
+                    profile.record(result);
+                    profile.update_stats();
                 }
-                Profile => StatsRenderer::new(&self.profile).render()?,
-                CfgToggle(v) => {
-                    let key = v.to_owned();
-                    let cfg = self.profile.get_config_mut();
-                    cfg.set(key.clone(), ConfigValue::Bool(!cfg.get_bool(key.clone())));
+                Profile => StatsRenderer::new(&self.profile.borrow()).render()?,
+                CfgToggle(key) => {
+                    let mut profile = self.profile.borrow_mut();
+                    let cfg = profile.get_config_mut();
+                    cfg.set(key, ConfigValue::Bool(!cfg.get_bool(key)));
                 }
-                CfgIncrement(v) => {
-                    let key = v.to_owned();
-                    let cfg = self.profile.get_config_mut();
-                    match cfg.get(key.clone()).to_owned() {
+                CfgIncrement(key) => {
+                    let mut profile = self.profile.borrow_mut();
+                    let cfg = profile.get_config_mut();
+                    match cfg.get(key).to_owned() {
                         ConfigValue::Integer { v, max, min } => {
                             if (v + 1) > max {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: min, max, min });
+                                cfg.set(key, ConfigValue::Integer { v: min, max, min });
                             } else {
-                                cfg.set(key.clone(), ConfigValue::Integer { v: v + 1, max, min });
+                                cfg.set(key, ConfigValue::Integer { v: v + 1, max, min });
                             }
                         }
                         ConfigValue::Select { options, selected } => {
                             if (selected + 2) > options.len() {
                                 cfg.set(
-                                    key.clone(),
+                                    key,
                                     ConfigValue::Select {
                                         options,
                                         selected: 0,
@@ -453,7 +461,7 @@ impl MenuRenderer {
                                 );
                             } else {
                                 cfg.set(
-                                    key.clone(),
+                                    key,
                                     ConfigValue::Select {
                                         options,
                                         selected: selected + 1,
@@ -501,6 +509,6 @@ impl MenuRenderer {
 
     /// Recursively executes all available update callbacks.
     fn execute_all_update_cb(&mut self) -> Result<(), std::io::Error> {
-        self.root_menu.execute_update_cb(&self.profile)
+        self.root_menu.execute_update_cb(&self.profile.borrow())
     }
 }
