@@ -62,11 +62,7 @@ impl Config {
     /// Get config values by key, select only. Will panic if called on other variants.
     pub fn get_select(&self, key: impl Into<String>) -> &str {
         let key = key.into();
-        if let ConfigValue::Select { options, selected } = self
-            .map
-            .get(&key)
-            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
-        {
+        if let ConfigValue::Select { options, selected } = self.get(&key) {
             options
                 .get(*selected)
                 .unwrap_or_else(|| panic!("option at position {selected} not found"))
@@ -78,11 +74,7 @@ impl Config {
     /// Get config values by key, boolean only. Will panic if called on other variants.
     pub fn get_bool(&self, key: impl AsRef<str>) -> bool {
         let key = key.as_ref();
-        if let ConfigValue::Bool(v) = self
-            .map
-            .get(key)
-            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
-        {
+        if let ConfigValue::Bool(v) = self.get(key) {
             v.to_owned()
         } else {
             panic!("get_bool called on non-boolean configuration item");
@@ -92,11 +84,7 @@ impl Config {
     /// Get config values by key, integer only. Will panic if called on other variants.
     pub fn get_int(&self, key: impl AsRef<str>) -> i32 {
         let key = key.as_ref();
-        if let ConfigValue::Integer { v, max: _, min: _ } = self
-            .map
-            .get(key)
-            .unwrap_or_else(|| panic!("no element '{key}' found in configuration map"))
-        {
+        if let ConfigValue::Integer { v, max: _, min: _ } = self.get(key) {
             v.to_owned()
         } else {
             panic!("get_int called on non-integer configuration item");
