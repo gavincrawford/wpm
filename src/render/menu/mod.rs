@@ -427,7 +427,7 @@ impl MenuRenderer {
                         Print("Press enter to continue.".italic())
                     )?;
                     stdout.flush()?;
-                    wait_until_enter(Some(Duration::from_secs(10)));
+                    pause(Some(Duration::from_secs(10)));
 
                     // otherwise, add test record to profile
                     profile.record(result);

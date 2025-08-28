@@ -117,8 +117,8 @@ impl<'a> StatsRenderer<'a> {
         queue!(stdout, Print("Press enter to exit.".italic()))?;
         stdout.flush()?;
 
-        // wait for keypress
-        wait_until_enter(None);
+        // wait for user input
+        pause(None);
 
         // done
         Ok(())

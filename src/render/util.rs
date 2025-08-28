@@ -35,16 +35,16 @@ pub fn clear(io: &mut Stdout) {
     .expect("failed to clear screen")
 }
 
-/// Stalls this thread until the enter key is pressed, or the timeout duration has been
-/// reached, if it exists.
-pub fn wait_until_enter(timeout: Option<Duration>) {
+/// Stalls this thread until the enter/ESC key is pressed, unless the timeout is reached first, if
+/// it is provided.
+pub fn pause(timeout: Option<Duration>) {
     use Event::*;
     let now = Instant::now();
     loop {
         // if enter gets pressed, done
         if poll(Duration::from_secs(1)).unwrap() {
             if let Key(key) = read().unwrap() {
-                if key.code == KeyCode::Enter {
+                if matches!(key.code, KeyCode::Enter | KeyCode::Esc) {
                     return;
                 }
             }
