@@ -12,8 +12,10 @@ pub enum MenuAction {
     Profile,
     /// Toggles a boolean config value.
     CfgToggle(String),
-    /// Increments integer or select config values.
+    /// Increments integer config values.
     CfgIncrement(String),
+    /// Sets a select config value to a specific option.
+    CfgSetSelect { key: String, value: usize },
     /// Does nothing.
     None,
 }

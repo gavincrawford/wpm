@@ -139,19 +139,55 @@ impl MenuRenderer {
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
                                 use ConfigValue::*;
-                                let action = match value {
-                                    Bool(_) => MenuAction::CfgToggle(key.clone()),
-                                    Integer { .. } => MenuAction::CfgIncrement(key.clone()),
-                                    Select { .. } => MenuAction::CfgIncrement(key.clone()),
-                                };
-                                settings.push(MenuElement::new_action(
-                                    format!(
-                                        "{} ({})",
-                                        key,
-                                        profile.get_config().get(key).to_string().green()
-                                    ),
-                                    action,
-                                ))
+                                match value {
+                                    // TODO: bring colors back! *without* breaking width
+                                    // adding colors to config values here count as part of the
+                                    // text width, which makes the menu blow up in size
+                                    Bool(_) => settings.push(MenuElement::new_action(
+                                        format!(
+                                            "{} ({})",
+                                            key,
+                                            profile.get_config().get(key).to_string()
+                                        ),
+                                        MenuAction::CfgToggle(key.clone()),
+                                    )),
+                                    Integer { .. } => settings.push(MenuElement::new_action(
+                                        format!(
+                                            "{} ({})",
+                                            key,
+                                            profile.get_config().get(key).to_string()
+                                        ),
+                                        MenuAction::CfgIncrement(key.clone()),
+                                    )),
+                                    Select { options, selected } => {
+                                        // create dropdown menu for Select configs
+                                        let mut dropdown_items = vec![];
+                                        for (idx, option) in options.iter().enumerate() {
+                                            let label = if idx == *selected {
+                                                format!("● {option}")
+                                            } else {
+                                                format!("  {option}")
+                                            };
+                                            dropdown_items.push(MenuElement::new_action(
+                                                label,
+                                                MenuAction::CfgSetSelect {
+                                                    key: key.clone(),
+                                                    value: idx,
+                                                },
+                                            ));
+                                        }
+
+                                        // create new menu to hold elements
+                                        settings.push(MenuElement::new_menu(
+                                            format!(
+                                                "{} ({})",
+                                                key,
+                                                profile.get_config().get(key).to_string()
+                                            ),
+                                            dropdown_items,
+                                        ))
+                                    }
+                                }
                             }
                             *element.subitems_mut().unwrap() = settings;
                         })),
@@ -442,22 +478,23 @@ impl MenuRenderer {
                 CfgIncrement(key) => {
                     let mut profile = self.profile.borrow_mut();
                     let cfg = profile.get_config_mut();
-                    match cfg.get_mut(key) {
-                        ConfigValue::Integer { v, max, min } => {
-                            if *v + 1 > *max {
-                                *v = *min;
-                            } else {
-                                *v = *v + 1
-                            }
+                    if let ConfigValue::Integer { v, max, min } = cfg.get_mut(key) {
+                        if *v + 1 > *max {
+                            *v = *min;
+                        } else {
+                            *v += 1
                         }
-                        ConfigValue::Select { options, selected } => {
-                            if *selected + 2 > options.len() {
-                                *selected = 0;
-                            } else {
-                                *selected = *selected + 1;
-                            }
-                        }
-                        _ => {}
+                    }
+                }
+                CfgSetSelect { key, value } => {
+                    let mut profile = self.profile.borrow_mut();
+                    let cfg = profile.get_config_mut();
+                    if let ConfigValue::Select { selected, .. } = cfg.get_mut(key) {
+                        *selected = *value;
+                    }
+                    // go back to the parent menu after selection
+                    if self.cursor.len() > 1 {
+                        self.cursor.pop();
                     }
                 }
                 _ => {
