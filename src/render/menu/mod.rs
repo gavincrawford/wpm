@@ -135,19 +135,19 @@ impl MenuRenderer {
                         "settings",
                         vec![],
                         Some(Rc::new(|profile, element| {
+                            // BUG: colors used here append an escape code that leaks into the menu
+                            // handling. this breaks existing greyscale colors
+
                             // get settings items
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
                                 use ConfigValue::*;
                                 match value {
-                                    // TODO: bring colors back! *without* breaking width
-                                    // adding colors to config values here count as part of the
-                                    // text width, which makes the menu blow up in size
                                     Bool(_) => settings.push(MenuElement::new_action(
                                         format!(
                                             "{} ({})",
                                             key,
-                                            profile.get_config().get(key).to_string()
+                                            profile.get_config().get(key).to_string().green()
                                         ),
                                         MenuAction::CfgToggle(key.clone()),
                                     )),
@@ -155,7 +155,7 @@ impl MenuRenderer {
                                         format!(
                                             "{} ({})",
                                             key,
-                                            profile.get_config().get(key).to_string()
+                                            profile.get_config().get(key).to_string().green()
                                         ),
                                         MenuAction::CfgIncrement(key.clone()),
                                     )),
@@ -182,7 +182,7 @@ impl MenuRenderer {
                                             format!(
                                                 "{} ({})",
                                                 key,
-                                                profile.get_config().get(key).to_string()
+                                                profile.get_config().get(key).to_string().green()
                                             ),
                                             dropdown_items,
                                         ))
@@ -266,8 +266,8 @@ impl MenuRenderer {
                         let label = element.label();
 
                         // update max_x for use later
-                        if label.len() > this_max_x {
-                            this_max_x = label.len();
+                        if display_len(label) > this_max_x {
+                            this_max_x = display_len(label);
                         }
 
                         // display each line

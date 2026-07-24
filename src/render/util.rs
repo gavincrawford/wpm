@@ -94,3 +94,25 @@ pub fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
     }
     str.trim().to_string()
 }
+
+/// Length of a string as it will appear on screen, excluding ANSI escape codes.
+pub(crate) fn display_len(s: &str) -> usize {
+    let mut len = 0;
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\u{1b}' {
+            // consume `[`, then everything up to (and including) the terminating
+            // letter of the CSI sequence
+            if chars.next() == Some('[') {
+                for c in chars.by_ref() {
+                    if c.is_ascii_alphabetic() {
+                        break;
+                    }
+                }
+            }
+        } else {
+            len += 1;
+        }
+    }
+    len
+}
