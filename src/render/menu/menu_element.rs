@@ -2,6 +2,8 @@ use super::*;
 use crossterm::style::{ContentStyle, StyledContent};
 use std::{fmt::Display, rc::Rc};
 
+type MenuCallback = Rc<dyn Fn(&Profile, &mut MenuElement)>;
+
 /// Represents menu options and submenus.
 #[derive(Clone)]
 pub struct MenuElement {
@@ -12,7 +14,7 @@ pub struct MenuElement {
     /// Element update callback. Used to update data if needed. More arguments could be used if
     /// required for further functionality than recent plays, which is what this feature was
     /// intended for.
-    update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
+    update_cb: Option<MenuCallback>,
     /// Element action, if this is an action.
     action: MenuAction,
 }
@@ -23,7 +25,7 @@ impl MenuElement {
     pub fn new_menu_cb(
         label: impl Into<MenuLabel>,
         subitems: Vec<MenuElement>,
-        update_cb: Option<Rc<dyn Fn(&Profile, &mut Self)>>,
+        update_cb: Option<MenuCallback>,
     ) -> Self {
         Self {
             label: label.into(),
