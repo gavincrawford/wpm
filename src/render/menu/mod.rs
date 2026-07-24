@@ -191,6 +191,13 @@ impl MenuRenderer {
                                             dropdown_items,
                                         ))
                                     }
+                                    Rgb(_) => settings.push(MenuElement::new_action(
+                                        MenuLabel::new()
+                                            .txt(key)
+                                            .txt(" ")
+                                            .txt(profile.get_config().get(key)),
+                                        MenuAction::None,
+                                    )),
                                 }
                             }
                             *element.subitems_mut().unwrap() = settings;

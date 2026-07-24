@@ -1,4 +1,5 @@
 use crate::render::wordlist::Wordlist;
+use crossterm::style::{Color, Stylize};
 use indexmap::IndexMap;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -40,6 +41,18 @@ impl Default for Config {
                     options: Wordlist::iter().map(|v| format!("{v:?}")).collect(),
                     selected: 0,
                 },
+            ),
+            (
+                "primary color".into(),
+                Rgb(SerialColor { r: 0, g: 255, b: 0 }),
+            ),
+            (
+                "secondary color".into(),
+                Rgb(SerialColor {
+                    r: 0,
+                    g: 120,
+                    b: 80,
+                }),
             ),
         ]
         .iter()
@@ -123,6 +136,25 @@ pub enum ConfigValue {
         options: Vec<String>,
         selected: usize,
     },
+    Rgb(SerialColor),
+}
+
+/// A serializable stand-in for crossterm's `Color::Rgb`, used to persist RGB configuration values.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SerialColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+
+impl From<SerialColor> for Color {
+    fn from(color: SerialColor) -> Self {
+        Color::Rgb {
+            r: color.r,
+            g: color.g,
+            b: color.b,
+        }
+    }
 }
 
 impl Display for ConfigValue {
@@ -138,6 +170,14 @@ impl Display for ConfigValue {
                     .get(*selected)
                     .expect("Selected index outside of range.");
                 write!(f, "{v}")
+            }
+            Rgb(color) => {
+                let (r, g, b) = (color.r, color.g, color.b);
+                write!(
+                    f,
+                    "{}",
+                    format!("#{r:02X}{g:02X}{b:02X}").with((*color).into())
+                )
             }
         }
     }
