@@ -126,6 +126,8 @@ impl MenuLabel {
         Self { slices }
     }
 
+    /// Returns the length of this label, as it will be displayed on screen.
+    /// This value excludes SGR/color codes.
     pub fn display_len(&self) -> usize {
         let mut len = 0;
         for slice in &self.slices {
@@ -149,6 +151,7 @@ impl MenuLabel {
         len
     }
 
+    /// Returns a string, wrapped with the provided style, for this label.
     pub fn with_style(&self, style: ContentStyle) -> String {
         let mut str_buf = String::new();
         for slice in self.slices.iter() {
