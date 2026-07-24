@@ -14,7 +14,7 @@ use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
-    style::{Print, Stylize},
+    style::{Color, ContentStyle, Print, Stylize},
 };
 use menu_action::*;
 use menu_element::*;
@@ -135,38 +135,38 @@ impl MenuRenderer {
                         "settings",
                         vec![],
                         Some(Rc::new(|profile, element| {
-                            // BUG: colors used here append an escape code that leaks into the menu
-                            // handling. this breaks existing greyscale colors
-
                             // get settings items
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
                                 use ConfigValue::*;
                                 match value {
                                     Bool(_) => settings.push(MenuElement::new_action(
-                                        format!(
-                                            "{} ({})",
+                                        label![
                                             key,
-                                            profile.get_config().get(key).to_string().green()
-                                        ),
+                                            " (",
+                                            profile.get_config().get(key).to_string().green(),
+                                            ")"
+                                        ],
                                         MenuAction::CfgToggle(key.clone()),
                                     )),
                                     Integer { .. } => settings.push(MenuElement::new_action(
-                                        format!(
-                                            "{} ({})",
+                                        label![
                                             key,
-                                            profile.get_config().get(key).to_string().green()
-                                        ),
+                                            " (",
+                                            profile.get_config().get(key).to_string().green(),
+                                            ")"
+                                        ],
                                         MenuAction::CfgIncrement(key.clone()),
                                     )),
                                     Select { options, selected } => {
                                         // create dropdown menu for Select configs
                                         let mut dropdown_items = vec![];
                                         for (idx, option) in options.iter().enumerate() {
+                                            let option = option.clone();
                                             let label = if idx == *selected {
-                                                format!("● {option}")
+                                                label!["● ", option.green()]
                                             } else {
-                                                format!("  {option}")
+                                                label!["  ", option]
                                             };
                                             dropdown_items.push(MenuElement::new_action(
                                                 label,
@@ -179,11 +179,12 @@ impl MenuRenderer {
 
                                         // create new menu to hold elements
                                         settings.push(MenuElement::new_menu(
-                                            format!(
-                                                "{} ({})",
+                                            label![
                                                 key,
-                                                profile.get_config().get(key).to_string().green()
-                                            ),
+                                                " (",
+                                                profile.get_config().get(key).to_string().green(),
+                                                ")"
+                                            ],
                                             dropdown_items,
                                         ))
                                     }
@@ -266,8 +267,8 @@ impl MenuRenderer {
                         let label = element.label();
 
                         // update max_x for use later
-                        if display_len(label) > this_max_x {
-                            this_max_x = display_len(label);
+                        if label.display_len() > this_max_x {
+                            this_max_x = label.display_len();
                         }
 
                         // display each line
@@ -279,7 +280,11 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                    Print(label.clone().dark_green().on_dark_grey()),
+                                    Print(label.with_style(ContentStyle {
+                                        foreground_color: Some(Color::DarkGreen),
+                                        background_color: Some(Color::DarkGrey),
+                                        ..Default::default()
+                                    })),
                                     MoveToNextLine(1)
                                 )?;
                             } else if this_is_selected {
@@ -287,7 +292,11 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
-                                    Print(label.clone().grey().on_dark_grey()),
+                                    Print(label.with_style(ContentStyle {
+                                        foreground_color: Some(Color::Grey),
+                                        background_color: Some(Color::DarkGrey),
+                                        ..Default::default()
+                                    })),
                                     MoveToNextLine(1)
                                 )?;
                             } else {
@@ -295,7 +304,7 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
-                                    Print(label.clone()),
+                                    Print(label),
                                     MoveToNextLine(1)
                                 )?;
                             }
@@ -304,7 +313,10 @@ impl MenuRenderer {
                             queue!(
                                 stdout,
                                 MoveRight(MARGIN as u16 + last_max_x as u16),
-                                Print(label.clone().dark_grey()),
+                                Print(label.with_style(ContentStyle {
+                                    foreground_color: Some(Color::DarkGrey),
+                                    ..Default::default()
+                                })),
                                 MoveToNextLine(1)
                             )?;
                         }

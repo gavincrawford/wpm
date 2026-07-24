@@ -12,6 +12,14 @@ use crossterm::{
 };
 use rand::prelude::IndexedRandom;
 
+/// Builds a `MenuLabel` from any number of `Display`-compatible values.
+macro_rules! label {
+    ($($x:expr),* $(,)?) => {
+        $crate::render::menu::menu_element::MenuLabel::new(vec![$($x.to_string()),*])
+    };
+}
+pub(crate) use label;
+
 /// Color linear interpolation, returns a Crossterm struct.
 pub(crate) fn color_lerp(a: (u8, u8, u8), b: (u8, u8, u8), t: f32) -> Color {
     let a = (a.0 as f32, a.1 as f32, a.2 as f32);
@@ -93,26 +101,4 @@ pub(crate) fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
         str += " ";
     }
     str.trim().to_string()
-}
-
-/// Length of a string as it will appear on screen, excluding ANSI escape codes.
-pub(crate) fn display_len(s: &str) -> usize {
-    let mut len = 0;
-    let mut chars = s.chars();
-    while let Some(c) = chars.next() {
-        if c == '\u{1b}' {
-            // consume `[`, then everything up to (and including) the terminating
-            // letter of the CSI sequence
-            if chars.next() == Some('[') {
-                for c in chars.by_ref() {
-                    if c.is_ascii_alphabetic() {
-                        break;
-                    }
-                }
-            }
-        } else {
-            len += 1;
-        }
-    }
-    len
 }
