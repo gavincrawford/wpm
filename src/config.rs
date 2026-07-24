@@ -14,7 +14,7 @@ impl Default for Config {
     fn default() -> Self {
         use ConfigValue::*;
         let mut map = IndexMap::new();
-        vec![
+        [
             ("show performance indicator".into(), Bool(true)),
             ("show live words per minute".into(), Bool(true)),
             ("show recent tests".into(), Bool(true)),
