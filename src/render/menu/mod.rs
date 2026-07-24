@@ -141,21 +141,19 @@ impl MenuRenderer {
                                 use ConfigValue::*;
                                 match value {
                                     Bool(_) => settings.push(MenuElement::new_action(
-                                        label![
-                                            key,
-                                            " (",
-                                            profile.get_config().get(key).to_string().green(),
-                                            ")"
-                                        ],
+                                        MenuLabel::new()
+                                            .txt(key)
+                                            .txt(" (")
+                                            .txt(profile.get_config().get(key).to_string().green())
+                                            .txt(")"),
                                         MenuAction::CfgToggle(key.clone()),
                                     )),
                                     Integer { .. } => settings.push(MenuElement::new_action(
-                                        label![
-                                            key,
-                                            " (",
-                                            profile.get_config().get(key).to_string().green(),
-                                            ")"
-                                        ],
+                                        MenuLabel::new()
+                                            .txt(key)
+                                            .txt(" (")
+                                            .txt(profile.get_config().get(key).to_string().green())
+                                            .txt(")"),
                                         MenuAction::CfgIncrement(key.clone()),
                                     )),
                                     Select { options, selected } => {
@@ -164,9 +162,9 @@ impl MenuRenderer {
                                         for (idx, option) in options.iter().enumerate() {
                                             let option = option.clone();
                                             let label = if idx == *selected {
-                                                label!["● ", option.green()]
+                                                MenuLabel::new().txt("● ").txt(option.green())
                                             } else {
-                                                label!["  ", option]
+                                                MenuLabel::new().txt("  ").txt(option.green())
                                             };
                                             dropdown_items.push(MenuElement::new_action(
                                                 label,
@@ -179,12 +177,17 @@ impl MenuRenderer {
 
                                         // create new menu to hold elements
                                         settings.push(MenuElement::new_menu(
-                                            label![
-                                                key,
-                                                " (",
-                                                profile.get_config().get(key).to_string().green(),
-                                                ")"
-                                            ],
+                                            MenuLabel::new()
+                                                .txt(key)
+                                                .txt(" (")
+                                                .txt(
+                                                    profile
+                                                        .get_config()
+                                                        .get(key)
+                                                        .to_string()
+                                                        .green(),
+                                                )
+                                                .txt(")"),
                                             dropdown_items,
                                         ))
                                     }

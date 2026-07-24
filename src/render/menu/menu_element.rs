@@ -122,8 +122,14 @@ pub struct MenuLabel {
 }
 
 impl MenuLabel {
-    pub fn new(slices: Vec<String>) -> Self {
-        Self { slices }
+    pub fn new() -> Self {
+        Self { slices: vec![] }
+    }
+
+    /// Adds a new text slice to this label.
+    pub fn txt(mut self, slice: impl ToString) -> Self {
+        self.slices.push(slice.to_string());
+        self
     }
 
     /// Returns the length of this label, as it will be displayed on screen.
