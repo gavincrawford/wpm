@@ -14,7 +14,7 @@ use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
     execute, queue,
-    style::{Color, ContentStyle, Print, Stylize},
+    style::{Attribute, Color, ContentStyle, Print, Stylize},
 };
 use menu_action::*;
 use menu_element::*;
@@ -33,6 +33,10 @@ pub struct MenuRenderer {
     profile: RefCell<Profile>,
     /// Profile path. If not overridden, it will default to "profile".
     profile_path: String,
+    /// Primary color. Pulled from config.
+    primary: Color,
+    /// Secondary color. Pulled from config.
+    secondary: Color,
     /// Root menu element.
     root_menu: MenuElement,
     /// True when profile will be saved, false otherwise. Mostly used for testing.
@@ -50,8 +54,14 @@ impl MenuRenderer {
             Profile::default()
         } else {
             Profile::read_from(&profile_path).unwrap_or_default()
-        }
-        .into();
+        };
+
+        // store color information and then convert to refcell for later use
+        let (primary, secondary) = (
+            profile.get_config().get_rgb("primary color"),
+            profile.get_config().get_rgb("secondary color"),
+        );
+        let profile: RefCell<Profile> = profile.into();
 
         // make menu items
         use TestMode::*;
@@ -60,6 +70,8 @@ impl MenuRenderer {
             cursor: vec![0],
             profile,
             profile_path,
+            primary,
+            secondary,
             root_menu: MenuElement::new_menu(
                 "root",
                 vec![
@@ -135,6 +147,14 @@ impl MenuRenderer {
                         "settings",
                         vec![],
                         Some(Rc::new(|profile, element| {
+                            // get primary color
+                            // NOTE: unlike other parts of the colorscheme implementation, this will
+                            // change dynamically during run-time. some colors used in the base menu
+                            // will not, and are only pulled when the configuration is read or
+                            // initialized
+                            let primary = profile.get_config().get_rgb("primary color");
+                            let secondary = profile.get_config().get_rgb("secondary color");
+
                             // get settings items
                             let mut settings = vec![];
                             for (key, value) in profile.get_config().map.iter() {
@@ -144,7 +164,13 @@ impl MenuRenderer {
                                         MenuLabel::new()
                                             .txt(key)
                                             .txt(" (")
-                                            .txt(profile.get_config().get(key).to_string().green())
+                                            .txt(
+                                                profile
+                                                    .get_config()
+                                                    .get(key)
+                                                    .to_string()
+                                                    .with(primary),
+                                            )
                                             .txt(")"),
                                         MenuAction::CfgToggle(key.clone()),
                                     )),
@@ -152,7 +178,13 @@ impl MenuRenderer {
                                         MenuLabel::new()
                                             .txt(key)
                                             .txt(" (")
-                                            .txt(profile.get_config().get(key).to_string().green())
+                                            .txt(
+                                                profile
+                                                    .get_config()
+                                                    .get(key)
+                                                    .to_string()
+                                                    .with(primary),
+                                            )
                                             .txt(")"),
                                         MenuAction::CfgIncrement(key.clone()),
                                     )),
@@ -162,9 +194,11 @@ impl MenuRenderer {
                                         for (idx, option) in options.iter().enumerate() {
                                             let option = option.clone();
                                             let label = if idx == *selected {
-                                                MenuLabel::new().txt("● ").txt(option.green())
+                                                MenuLabel::new().txt("● ").txt(option.with(primary))
                                             } else {
-                                                MenuLabel::new().txt("  ").txt(option.green())
+                                                MenuLabel::new()
+                                                    .txt("  ")
+                                                    .txt(option.with(secondary))
                                             };
                                             dropdown_items.push(MenuElement::new_action(
                                                 label,
@@ -185,7 +219,7 @@ impl MenuRenderer {
                                                         .get_config()
                                                         .get(key)
                                                         .to_string()
-                                                        .green(),
+                                                        .with(primary),
                                                 )
                                                 .txt(")"),
                                             dropdown_items,
@@ -226,7 +260,7 @@ impl MenuRenderer {
                 stdout,
                 Hide,
                 MoveTo(0, 0),
-                Print("WPM".on_dark_grey().grey()),
+                Print("~ WPM ~".with(self.primary)),
             )?;
             if !self.save {
                 queue!(
@@ -291,8 +325,9 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(Color::DarkGreen),
+                                        foreground_color: Some(self.primary),
                                         background_color: Some(Color::DarkGrey),
+                                        attributes: Attribute::Bold.into(),
                                         ..Default::default()
                                     })),
                                     MoveToNextLine(1)
@@ -303,7 +338,7 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(Color::Grey),
+                                        foreground_color: Some(self.primary),
                                         background_color: Some(Color::DarkGrey),
                                         ..Default::default()
                                     })),
@@ -314,7 +349,10 @@ impl MenuRenderer {
                                 queue!(
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
-                                    Print(label),
+                                    Print(label.with_style(ContentStyle {
+                                        foreground_color: Some(self.secondary),
+                                        ..Default::default()
+                                    })),
                                     MoveToNextLine(1)
                                 )?;
                             }

@@ -44,14 +44,18 @@ impl Default for Config {
             ),
             (
                 "primary color".into(),
-                Rgb(SerialColor { r: 0, g: 255, b: 0 }),
+                Rgb(SerialColor {
+                    r: 170,
+                    g: 170,
+                    b: 255,
+                }),
             ),
             (
                 "secondary color".into(),
                 Rgb(SerialColor {
-                    r: 0,
-                    g: 120,
-                    b: 80,
+                    r: 255,
+                    g: 255,
+                    b: 255,
                 }),
             ),
         ]
@@ -111,6 +115,16 @@ impl Config {
             v.to_owned()
         } else {
             panic!("get_int called on non-integer configuration item");
+        }
+    }
+
+    /// Get config values by key, RGB only. Will panic if called on other variants.
+    pub fn get_rgb(&self, key: impl AsRef<str>) -> Color {
+        let key = key.as_ref();
+        if let ConfigValue::Rgb(serial_color) = self.get(key) {
+            (*serial_color).into()
+        } else {
+            panic!("get_rgb called on non-RGB configuration item");
         }
     }
 
