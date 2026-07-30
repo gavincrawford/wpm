@@ -171,6 +171,16 @@ impl From<SerialColor> for Color {
     }
 }
 
+impl From<Color> for SerialColor {
+    fn from(color: Color) -> Self {
+        if let Color::Rgb { r, g, b } = color {
+            SerialColor { r, g, b }
+        } else {
+            unreachable!("serial colors can only contain RGB color values");
+        }
+    }
+}
+
 impl Display for ConfigValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ConfigValue::*;

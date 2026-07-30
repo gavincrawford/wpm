@@ -2,7 +2,7 @@ use super::*;
 use crossterm::style::{ContentStyle, StyledContent};
 use std::{fmt::Display, rc::Rc};
 
-type MenuCallback = Rc<dyn Fn(&Profile, &mut MenuElement)>;
+type UpdateCallback = Rc<dyn Fn(&mut Profile, &mut MenuElement, Option<&mut KeyEvent>)>;
 
 /// Represents menu options and submenus.
 #[derive(Clone)]
@@ -14,7 +14,7 @@ pub struct MenuElement {
     /// Element update callback. Used to update data if needed. More arguments could be used if
     /// required for further functionality than recent plays, which is what this feature was
     /// intended for.
-    update_cb: Option<MenuCallback>,
+    update_cb: Option<UpdateCallback>,
     /// Element action, if this is an action.
     action: MenuAction,
 }
@@ -25,7 +25,7 @@ impl MenuElement {
     pub fn new_menu_cb(
         label: impl Into<MenuLabel>,
         subitems: Vec<MenuElement>,
-        update_cb: Option<MenuCallback>,
+        update_cb: Option<UpdateCallback>,
     ) -> Self {
         Self {
             label: label.into(),
@@ -67,22 +67,22 @@ impl MenuElement {
 
     /// Execute on-render callback for this element.
     /// Running an update callback will recursively update all children.
-    pub fn execute_update_cb(&mut self, profile: &Profile) -> Result<(), std::io::Error> {
+    pub fn execute_update_cb(&mut self, profile: &mut Profile) -> Result<(), std::io::Error> {
         // update all children
         if let Some(subitems) = &mut self.subitems {
-            subitems.iter_mut().for_each(|element| {
+            for element in subitems.iter_mut() {
                 element.execute_update_cb(profile).unwrap_or_else(|_| {
                     panic!(
                         "Failed to execute child('{}') update callback of  parent('{}').",
                         element.label, self.label
                     )
                 });
-            })
+            }
         }
 
         // update self
         if let Some(cb) = self.update_cb.clone() {
-            cb(profile, self);
+            cb(profile, self, None);
         }
 
         // done
@@ -115,6 +115,17 @@ impl MenuElement {
     /// Get an immutable reference to the action of this element.
     pub fn action(&self) -> &MenuAction {
         &self.action
+    }
+
+    /// Calls this element's update callback with the provided keystroke, if applicable.
+    /// Returns true if this call was successful.
+    pub fn call_keystroke(&mut self, profile: &mut Profile, key: &mut KeyEvent) -> bool {
+        if let Some(cb) = self.update_cb.clone() {
+            cb(profile, self, Some(key));
+            true
+        } else {
+            false
+        }
     }
 }
 

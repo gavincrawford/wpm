@@ -9,7 +9,11 @@ use std::{
 };
 
 use super::{test::*, util::*, wordlist::*};
-use crate::{config::ConfigValue, profile::Profile, render::stats::StatsRenderer};
+use crate::{
+    config::{ConfigValue, SerialColor},
+    profile::Profile,
+    render::stats::StatsRenderer,
+};
 use crossterm::{
     cursor::{Hide, MoveRight, MoveTo, MoveToNextLine, MoveUp, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -33,10 +37,6 @@ pub struct MenuRenderer {
     profile: RefCell<Profile>,
     /// Profile path. If not overridden, it will default to "profile".
     profile_path: String,
-    /// Primary color. Pulled from config.
-    primary: Color,
-    /// Secondary color. Pulled from config.
-    secondary: Color,
     /// Root menu element.
     root_menu: MenuElement,
     /// True when profile will be saved, false otherwise. Mostly used for testing.
@@ -54,14 +54,8 @@ impl MenuRenderer {
             Profile::default()
         } else {
             Profile::read_from(&profile_path).unwrap_or_default()
-        };
-
-        // store color information and then convert to refcell for later use
-        let (primary, secondary) = (
-            profile.get_config().get_rgb("primary color"),
-            profile.get_config().get_rgb("secondary color"),
-        );
-        let profile: RefCell<Profile> = profile.into();
+        }
+        .into();
 
         // make menu items
         use TestMode::*;
@@ -70,8 +64,6 @@ impl MenuRenderer {
             cursor: vec![0],
             profile,
             profile_path,
-            primary,
-            secondary,
             root_menu: MenuElement::new_menu(
                 "root",
                 vec![
@@ -116,7 +108,7 @@ impl MenuRenderer {
                             ),
                         ],
                         // recents updater
-                        Some(Rc::new(|profile, element| {
+                        Some(Rc::new(|profile, element, _| {
                             // remove old subitems
                             let subitems = element.subitems_mut().unwrap(); // safe unwrap
                             subitems.retain(|v| v.subitems().is_some());
@@ -146,12 +138,8 @@ impl MenuRenderer {
                     MenuElement::new_menu_cb(
                         "settings",
                         vec![],
-                        Some(Rc::new(|profile, element| {
+                        Some(Rc::new(|profile, element, _| {
                             // get primary color
-                            // NOTE: unlike other parts of the colorscheme implementation, this will
-                            // change dynamically during run-time. some colors used in the base menu
-                            // will not, and are only pulled when the configuration is read or
-                            // initialized
                             let primary = profile.get_config().get_rgb("primary color");
                             let secondary = profile.get_config().get_rgb("secondary color");
 
@@ -225,13 +213,81 @@ impl MenuRenderer {
                                             dropdown_items,
                                         ))
                                     }
-                                    Rgb(_) => settings.push(MenuElement::new_action(
-                                        MenuLabel::new()
-                                            .txt(key)
-                                            .txt(" ")
-                                            .txt(profile.get_config().get(key)),
-                                        MenuAction::None,
-                                    )),
+                                    Rgb(_) => {
+                                        let color: SerialColor =
+                                            profile.get_config().get_rgb(key).into();
+                                        let key = key.clone();
+                                        settings.push(MenuElement::new_menu_cb(
+                                            MenuLabel::new()
+                                                .txt(&key)
+                                                .txt(" ")
+                                                .txt(profile.get_config().get(&key)),
+                                            vec![
+                                                MenuElement::new_action(
+                                                    "<r/g/b>: +, <SHIFT>: -",
+                                                    MenuAction::None,
+                                                ),
+                                                MenuElement::new_action(
+                                                    MenuLabel::new()
+                                                        .txt("R: ".dark_red())
+                                                        .txt(color.r),
+                                                    MenuAction::None,
+                                                ),
+                                                MenuElement::new_action(
+                                                    MenuLabel::new()
+                                                        .txt("G: ".dark_green())
+                                                        .txt(color.g),
+                                                    MenuAction::None,
+                                                ),
+                                                MenuElement::new_action(
+                                                    MenuLabel::new()
+                                                        .txt("B: ".dark_blue())
+                                                        .txt(color.b),
+                                                    MenuAction::None,
+                                                ),
+                                                MenuElement::new_action(
+                                                    MenuLabel::new()
+                                                        .txt(profile.get_config().get(&key)),
+                                                    MenuAction::None,
+                                                ),
+                                            ],
+                                            Some(Rc::new(move |profile, _element, keystroke| {
+                                                let Some(keystroke) = keystroke else {
+                                                    return;
+                                                };
+
+                                                // use left/right to iterate every channel of this
+                                                // color up or down together, then save it back
+                                                let (d_r, d_g, d_b): (i32, i32, i32) =
+                                                    match keystroke.code {
+                                                        KeyCode::Char('r') => (1, 0, 0),
+                                                        KeyCode::Char('R') => (-1, 0, 0),
+                                                        KeyCode::Char('g') => (0, 1, 0),
+                                                        KeyCode::Char('G') => (0, -1, 0),
+                                                        KeyCode::Char('b') => (0, 0, 1),
+                                                        KeyCode::Char('B') => (0, 0, -1),
+                                                        _ => return,
+                                                    };
+
+                                                let mut color: SerialColor =
+                                                    profile.get_config().get_rgb(&key).into();
+                                                for (channel, delta) in [
+                                                    (&mut color.r, d_r),
+                                                    (&mut color.g, d_g),
+                                                    (&mut color.b, d_b),
+                                                ] {
+                                                    *channel = (*channel as i32 + delta)
+                                                        .clamp(0, 255)
+                                                        as u8;
+                                                }
+
+                                                // reassign new color
+                                                profile
+                                                    .get_config_mut()
+                                                    .set(&key, ConfigValue::Rgb(color));
+                                            })),
+                                        ))
+                                    }
                                 }
                             }
                             *element.subitems_mut().unwrap() = settings;
@@ -244,24 +300,27 @@ impl MenuRenderer {
 
     /// Renders the menu util exited or a test is started.
     pub fn render(&mut self) -> Result<(), std::io::Error> {
-        // update profile stats, just in case
+        // update stats in `profile`
         self.profile.borrow_mut().update_stats();
 
         // get stdout handle
         let mut stdout = stdout();
         let mut err: Result<(), std::io::Error> = Ok(());
         loop {
+            // fetch colors from profile
+            // PERF: this occurs every frame, which adds lag that could be optimized away by only
+            // fetching these when they change
+            let profile = self.profile.borrow_mut();
+            let primary = profile.get_config().get_rgb("primary color");
+            let secondary = profile.get_config().get_rgb("secondary color");
+            drop(profile);
+
             // execute update callbacks
             self.execute_all_update_cb()?;
 
             // print label and profile notification
             clear(&mut stdout);
-            queue!(
-                stdout,
-                Hide,
-                MoveTo(0, 0),
-                Print("~ WPM ~".with(self.primary)),
-            )?;
+            queue!(stdout, Hide, MoveTo(0, 0), Print("~ WPM ~".with(primary)),)?;
             if !self.save {
                 queue!(
                     stdout,
@@ -325,7 +384,7 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(self.primary),
+                                        foreground_color: Some(primary),
                                         background_color: Some(Color::DarkGrey),
                                         attributes: Attribute::Bold.into(),
                                         ..Default::default()
@@ -338,7 +397,7 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + 1 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(self.primary),
+                                        foreground_color: Some(primary),
                                         background_color: Some(Color::DarkGrey),
                                         ..Default::default()
                                     })),
@@ -350,7 +409,7 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(self.secondary),
+                                        foreground_color: Some(secondary),
                                         ..Default::default()
                                     })),
                                     MoveToNextLine(1)
@@ -429,9 +488,10 @@ impl MenuRenderer {
     }
 
     /// Handles a keypress.
-    fn handle_key(&mut self, key: KeyEvent) -> Result<(), std::io::Error> {
+    fn handle_key(&mut self, mut key: KeyEvent) -> Result<(), std::io::Error> {
         use KeyCode::*;
         match key.code {
+            // menu-first keycodes
             Down | Char('j') => {
                 if let Some(i) = self.cursor.last().expect("cursor is null").checked_add(1) {
                     *self.cursor.last_mut().unwrap() = i;
@@ -445,7 +505,29 @@ impl MenuRenderer {
             Enter => {
                 self.select_at_cursor()?;
             }
-            _ => {}
+
+            _ => {
+                let cursor = self.cursor.clone();
+                let mut profile = self.profile.borrow_mut();
+
+                fn deliver_keystroke_recursive(
+                    element: &mut MenuElement,
+                    cursor: &[usize],
+                    profile: &mut Profile,
+                    key: &mut KeyEvent,
+                ) -> bool {
+                    if let Some((&idx, rest)) = cursor.split_first() {
+                        if let Some(child) = element.subitems_mut().and_then(|s| s.get_mut(idx)) {
+                            if deliver_keystroke_recursive(child, rest, profile, key) {
+                                return true;
+                            }
+                        }
+                    }
+                    element.call_keystroke(profile, key)
+                }
+
+                deliver_keystroke_recursive(&mut self.root_menu, &cursor, &mut profile, &mut key);
+            }
         }
 
         // execute update callbacks for menu items that may have changed after whatever action this
@@ -594,7 +676,8 @@ impl MenuRenderer {
 
     /// Recursively executes all available update callbacks.
     fn execute_all_update_cb(&mut self) -> Result<(), std::io::Error> {
-        self.root_menu.execute_update_cb(&self.profile.borrow())
+        self.root_menu
+            .execute_update_cb(&mut self.profile.borrow_mut())
     }
 }
 
@@ -677,5 +760,55 @@ mod tests {
         let mut renderer = create_test_menu_renderer();
         let result = renderer.execute_all_update_cb();
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn rgb_picker_persists_value() {
+        let mut renderer = create_test_menu_renderer();
+
+        // navigate to "settings" (root item 2: type, profile, settings)
+        for _ in 0..2 {
+            renderer
+                .handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE))
+                .unwrap();
+        }
+        assert_eq!(renderer.cursor, vec![2]);
+
+        // enter "settings"
+        renderer
+            .handle_key(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE))
+            .unwrap();
+        assert_eq!(renderer.cursor, vec![2, 0]);
+
+        // navigate down to "primary color" (settings item 6, per `Config::default`'s insertion
+        for _ in 0..6 {
+            renderer
+                .handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE))
+                .unwrap();
+        }
+        assert_eq!(renderer.cursor, vec![2, 6]);
+
+        let before: SerialColor = renderer
+            .profile
+            .borrow()
+            .get_config()
+            .get_rgb("primary color")
+            .into();
+
+        // decrease red channel by one
+        renderer
+            .handle_key(KeyEvent::new(KeyCode::Char('R'), KeyModifiers::NONE))
+            .unwrap();
+
+        let after: SerialColor = renderer
+            .profile
+            .borrow()
+            .get_config()
+            .get_rgb("primary color")
+            .into();
+
+        assert_eq!(after.r, before.r.saturating_sub(1));
+        assert_eq!(after.g, before.g);
+        assert_eq!(after.b, before.b);
     }
 }
