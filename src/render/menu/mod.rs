@@ -57,7 +57,7 @@ impl MenuRenderer {
             // fetch colors from profile
             // PERF: this occurs every frame, which adds lag that could be optimized away by only
             // fetching these when they change
-            let profile = self.profile.borrow_mut();
+            let profile = self.profile.borrow();
             let primary: Color = profile.get_config().get_rgb("primary color").into();
             let secondary: Color = profile.get_config().get_rgb("secondary color").into();
             drop(profile);
