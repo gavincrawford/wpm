@@ -106,8 +106,12 @@ impl MenuRenderer {
                                     MenuLabel::new()
                                         .txt(key)
                                         .txt(" (")
-                                        .txt(
-                                            profile.get_config().get(key).to_string().with(primary),
+                                        .txt_styled(
+                                            profile.get_config().get(key),
+                                            ContentStyle {
+                                                foreground_color: Some(primary),
+                                                ..Default::default()
+                                            },
                                         )
                                         .txt(")"),
                                     MenuAction::CfgToggle(key.clone()),
@@ -116,8 +120,12 @@ impl MenuRenderer {
                                     MenuLabel::new()
                                         .txt(key)
                                         .txt(" (")
-                                        .txt(
-                                            profile.get_config().get(key).to_string().with(primary),
+                                        .txt_styled(
+                                            profile.get_config().get(key),
+                                            ContentStyle {
+                                                foreground_color: Some(primary),
+                                                ..Default::default()
+                                            },
                                         )
                                         .txt(")"),
                                     MenuAction::CfgIncrement(key.clone()),
@@ -128,9 +136,21 @@ impl MenuRenderer {
                                     for (idx, option) in options.iter().enumerate() {
                                         let option = option.clone();
                                         let label = if idx == *selected {
-                                            MenuLabel::new().txt("● ").txt(option.with(primary))
+                                            MenuLabel::new().txt("● ").txt_styled(
+                                                option,
+                                                ContentStyle {
+                                                    foreground_color: Some(primary),
+                                                    ..Default::default()
+                                                },
+                                            )
                                         } else {
-                                            MenuLabel::new().txt("  ").txt(option.with(secondary))
+                                            MenuLabel::new().txt("  ").txt_styled(
+                                                option,
+                                                ContentStyle {
+                                                    foreground_color: Some(secondary),
+                                                    ..Default::default()
+                                                },
+                                            )
                                         };
                                         dropdown_items.push(MenuElement::new_action(
                                             label,
@@ -146,12 +166,12 @@ impl MenuRenderer {
                                         MenuLabel::new()
                                             .txt(key)
                                             .txt(" (")
-                                            .txt(
-                                                profile
-                                                    .get_config()
-                                                    .get(key)
-                                                    .to_string()
-                                                    .with(primary),
+                                            .txt_styled(
+                                                profile.get_config().get(key),
+                                                ContentStyle {
+                                                    foreground_color: Some(primary),
+                                                    ..Default::default()
+                                                },
                                             )
                                             .txt(")"),
                                         dropdown_items,
@@ -171,18 +191,42 @@ impl MenuRenderer {
                                                 MenuAction::None,
                                             ),
                                             MenuElement::new_action(
-                                                MenuLabel::new().txt("R: ".dark_red()).txt(color.r),
+                                                MenuLabel::new()
+                                                    .txt_styled(
+                                                        "R: ",
+                                                        ContentStyle {
+                                                            foreground_color: Some(Color::DarkRed),
+                                                            ..Default::default()
+                                                        },
+                                                    )
+                                                    .txt(color.r),
                                                 MenuAction::None,
                                             ),
                                             MenuElement::new_action(
                                                 MenuLabel::new()
-                                                    .txt("G: ".dark_green())
+                                                    .txt_styled(
+                                                        "G: ",
+                                                        ContentStyle {
+                                                            foreground_color: Some(
+                                                                Color::DarkGreen,
+                                                            ),
+                                                            ..Default::default()
+                                                        },
+                                                    )
                                                     .txt(color.g),
                                                 MenuAction::None,
                                             ),
                                             MenuElement::new_action(
                                                 MenuLabel::new()
-                                                    .txt("B: ".dark_blue())
+                                                    .txt_styled(
+                                                        "B: ",
+                                                        ContentStyle {
+                                                            foreground_color: Some(
+                                                                Color::DarkBlue,
+                                                            ),
+                                                            ..Default::default()
+                                                        },
+                                                    )
                                                     .txt(color.b),
                                                 MenuAction::None,
                                             ),

@@ -134,7 +134,9 @@ impl MenuElement {
 
 #[derive(Clone)]
 pub(crate) struct MenuLabel {
-    slices: Vec<String>,
+    /// Text slices. Each slice contains a string and an optional `ContentStyle` that is applied
+    /// when rendered.
+    slices: Vec<(String, Option<ContentStyle>)>,
 }
 
 impl MenuLabel {
@@ -142,9 +144,17 @@ impl MenuLabel {
         Self { slices: vec![] }
     }
 
-    /// Adds a new text slice to this label.
+    /// Adds a new, unstyled text slice to this label.
     pub(crate) fn txt(mut self, slice: impl ToString) -> Self {
-        self.slices.push(slice.to_string());
+        self.slices.push((slice.to_string(), None));
+        self
+    }
+
+    /// Adds a new text slice with a style applied to just that slice. `style` is merged with the
+    /// label's render-time style when displayed, so fields left unset here will be inherited from
+    /// the outside content.
+    pub(crate) fn txt_styled(mut self, slice: impl ToString, style: ContentStyle) -> Self {
+        self.slices.push((slice.to_string(), Some(style)));
         self
     }
 
@@ -152,7 +162,7 @@ impl MenuLabel {
     /// This value excludes SGR/color codes.
     pub(crate) fn display_len(&self) -> usize {
         let mut len = 0;
-        for slice in &self.slices {
+        for (slice, _) in &self.slices {
             let mut chars = slice.chars();
             while let Some(c) = chars.next() {
                 if c == '\u{1b}' {
@@ -174,10 +184,20 @@ impl MenuLabel {
     }
 
     /// Returns a string, wrapped with the provided style, for this label.
+    /// Slices with custom styles will still keep their `ContentStyle`s.
     pub(crate) fn with_style(&self, style: ContentStyle) -> String {
         let mut str_buf = String::new();
-        for slice in self.slices.iter() {
-            let slice = StyledContent::new(style, slice.clone());
+        for (slice, slice_style) in self.slices.iter() {
+            let merged = match slice_style {
+                Some(slice_style) => ContentStyle {
+                    foreground_color: slice_style.foreground_color.or(style.foreground_color),
+                    background_color: slice_style.background_color.or(style.background_color),
+                    underline_color: slice_style.underline_color.or(style.underline_color),
+                    attributes: style.attributes | slice_style.attributes,
+                },
+                None => style,
+            };
+            let slice = StyledContent::new(merged, slice.clone());
             str_buf.push_str(format!("{}", slice).as_ref());
         }
         str_buf
@@ -187,7 +207,7 @@ impl MenuLabel {
 impl From<String> for MenuLabel {
     fn from(value: String) -> Self {
         Self {
-            slices: vec![value],
+            slices: vec![(value, None)],
         }
     }
 }
@@ -195,14 +215,14 @@ impl From<String> for MenuLabel {
 impl From<&str> for MenuLabel {
     fn from(value: &str) -> Self {
         Self {
-            slices: vec![value.to_string()],
+            slices: vec![(value.to_string(), None)],
         }
     }
 }
 
 impl Display for MenuLabel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for slice in &self.slices {
+        for (slice, _) in &self.slices {
             write!(f, "{slice}")?;
         }
         Ok(())
