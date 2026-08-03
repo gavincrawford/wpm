@@ -119,10 +119,10 @@ impl Config {
     }
 
     /// Get config values by key, RGB only. Will panic if called on other variants.
-    pub(crate) fn get_rgb(&self, key: impl AsRef<str>) -> Color {
+    pub(crate) fn get_rgb(&self, key: impl AsRef<str>) -> SerialColor {
         let key = key.as_ref();
         if let ConfigValue::Rgb(serial_color) = self.get(key) {
-            (*serial_color).into()
+            *serial_color
         } else {
             panic!("get_rgb called on non-RGB configuration item");
         }
@@ -167,16 +167,6 @@ impl From<SerialColor> for Color {
             r: color.r,
             g: color.g,
             b: color.b,
-        }
-    }
-}
-
-impl From<Color> for SerialColor {
-    fn from(color: Color) -> Self {
-        if let Color::Rgb { r, g, b } = color {
-            SerialColor { r, g, b }
-        } else {
-            unreachable!("serial colors can only contain RGB color values");
         }
     }
 }

@@ -58,8 +58,8 @@ impl MenuRenderer {
             // PERF: this occurs every frame, which adds lag that could be optimized away by only
             // fetching these when they change
             let profile = self.profile.borrow_mut();
-            let primary = profile.get_config().get_rgb("primary color");
-            let secondary = profile.get_config().get_rgb("secondary color");
+            let primary: Color = profile.get_config().get_rgb("primary color").into();
+            let secondary: Color = profile.get_config().get_rgb("secondary color").into();
             drop(profile);
 
             // execute update callbacks
@@ -539,8 +539,7 @@ mod tests {
             .profile
             .borrow()
             .get_config()
-            .get_rgb("primary color")
-            .into();
+            .get_rgb("primary color");
 
         // decrease red channel by one
         renderer
@@ -551,8 +550,7 @@ mod tests {
             .profile
             .borrow()
             .get_config()
-            .get_rgb("primary color")
-            .into();
+            .get_rgb("primary color");
 
         assert_eq!(after.r, before.r.saturating_sub(1));
         assert_eq!(after.g, before.g);

@@ -93,8 +93,9 @@ impl MenuRenderer {
                     vec![],
                     Some(Rc::new(|profile, element, _| {
                         // get primary color
-                        let primary = profile.get_config().get_rgb("primary color");
-                        let secondary = profile.get_config().get_rgb("secondary color");
+                        let primary: Color = profile.get_config().get_rgb("primary color").into();
+                        let secondary: Color =
+                            profile.get_config().get_rgb("secondary color").into();
 
                         // get settings items
                         let mut settings = vec![];
@@ -157,8 +158,7 @@ impl MenuRenderer {
                                     ))
                                 }
                                 Rgb(_) => {
-                                    let color: SerialColor =
-                                        profile.get_config().get_rgb(key).into();
+                                    let color: SerialColor = profile.get_config().get_rgb(key);
                                     let key = key.clone();
                                     settings.push(MenuElement::new_menu_cb(
                                         MenuLabel::new()
@@ -211,7 +211,7 @@ impl MenuRenderer {
                                                 };
 
                                             let mut color: SerialColor =
-                                                profile.get_config().get_rgb(&key).into();
+                                                profile.get_config().get_rgb(&key);
                                             for (channel, delta) in [
                                                 (&mut color.r, d_r),
                                                 (&mut color.g, d_g),
