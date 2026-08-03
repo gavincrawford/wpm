@@ -6,7 +6,7 @@ type UpdateCallback = Rc<dyn Fn(&mut Profile, &mut MenuElement, Option<&mut KeyE
 
 /// Represents menu options and submenus.
 #[derive(Clone)]
-pub struct MenuElement {
+pub(crate) struct MenuElement {
     /// Element label.
     label: MenuLabel,
     /// Element subitems, if this is a submenu.
@@ -22,7 +22,7 @@ pub struct MenuElement {
 impl MenuElement {
     /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu. Uses
     /// an update callback.
-    pub fn new_menu_cb(
+    pub(crate) fn new_menu_cb(
         label: impl Into<MenuLabel>,
         subitems: Vec<MenuElement>,
         update_cb: Option<UpdateCallback>,
@@ -36,7 +36,7 @@ impl MenuElement {
     }
 
     /// Creates a `MenuElement` that does *not* utilize an action, and represents a submenu.
-    pub fn new_menu(label: impl Into<MenuLabel>, subitems: Vec<MenuElement>) -> Self {
+    pub(crate) fn new_menu(label: impl Into<MenuLabel>, subitems: Vec<MenuElement>) -> Self {
         Self {
             label: label.into(),
             subitems: Some(subitems),
@@ -46,7 +46,7 @@ impl MenuElement {
     }
 
     /// Creates a `MenuElement` that utilizes an action.
-    pub fn new_action(label: impl Into<MenuLabel>, action: MenuAction) -> Self {
+    pub(crate) fn new_action(label: impl Into<MenuLabel>, action: MenuAction) -> Self {
         Self {
             label: label.into(),
             subitems: None,
@@ -57,7 +57,7 @@ impl MenuElement {
 
     /// Creates a `MenuElement` that utilizes a test action.
     /// If `wordlist` parameter is `None`, will use config default.
-    pub fn new_test(
+    pub(crate) fn new_test(
         label: impl Into<MenuLabel>,
         mode: TestMode,
         wordlist: Option<Wordlist>,
@@ -67,7 +67,10 @@ impl MenuElement {
 
     /// Execute on-render callback for this element.
     /// Running an update callback will recursively update all children.
-    pub fn execute_update_cb(&mut self, profile: &mut Profile) -> Result<(), std::io::Error> {
+    pub(crate) fn execute_update_cb(
+        &mut self,
+        profile: &mut Profile,
+    ) -> Result<(), std::io::Error> {
         // update all children
         if let Some(subitems) = &mut self.subitems {
             for element in subitems.iter_mut() {
@@ -90,12 +93,12 @@ impl MenuElement {
     }
 
     /// Get an immutable reference to the label of this element.
-    pub fn label(&self) -> &MenuLabel {
+    pub(crate) fn label(&self) -> &MenuLabel {
         &self.label
     }
 
     /// Get an immutable reference to the subitems of this element.
-    pub fn subitems(&self) -> Option<&Vec<MenuElement>> {
+    pub(crate) fn subitems(&self) -> Option<&Vec<MenuElement>> {
         if let Some(elements) = &self.subitems {
             Some(elements)
         } else {
@@ -104,7 +107,7 @@ impl MenuElement {
     }
 
     /// Get an mutable reference to the subitems of this element.
-    pub fn subitems_mut(&mut self) -> Option<&mut Vec<MenuElement>> {
+    pub(crate) fn subitems_mut(&mut self) -> Option<&mut Vec<MenuElement>> {
         if let Some(elements) = &mut self.subitems {
             Some(elements)
         } else {
@@ -113,13 +116,13 @@ impl MenuElement {
     }
 
     /// Get an immutable reference to the action of this element.
-    pub fn action(&self) -> &MenuAction {
+    pub(crate) fn action(&self) -> &MenuAction {
         &self.action
     }
 
     /// Calls this element's update callback with the provided keystroke, if applicable.
     /// Returns true if this call was successful.
-    pub fn call_keystroke(&mut self, profile: &mut Profile, key: &mut KeyEvent) -> bool {
+    pub(crate) fn call_keystroke(&mut self, profile: &mut Profile, key: &mut KeyEvent) -> bool {
         if let Some(cb) = self.update_cb.clone() {
             cb(profile, self, Some(key));
             true
@@ -130,24 +133,24 @@ impl MenuElement {
 }
 
 #[derive(Clone)]
-pub struct MenuLabel {
+pub(crate) struct MenuLabel {
     slices: Vec<String>,
 }
 
 impl MenuLabel {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self { slices: vec![] }
     }
 
     /// Adds a new text slice to this label.
-    pub fn txt(mut self, slice: impl ToString) -> Self {
+    pub(crate) fn txt(mut self, slice: impl ToString) -> Self {
         self.slices.push(slice.to_string());
         self
     }
 
     /// Returns the length of this label, as it will be displayed on screen.
     /// This value excludes SGR/color codes.
-    pub fn display_len(&self) -> usize {
+    pub(crate) fn display_len(&self) -> usize {
         let mut len = 0;
         for slice in &self.slices {
             let mut chars = slice.chars();
@@ -171,7 +174,7 @@ impl MenuLabel {
     }
 
     /// Returns a string, wrapped with the provided style, for this label.
-    pub fn with_style(&self, style: ContentStyle) -> String {
+    pub(crate) fn with_style(&self, style: ContentStyle) -> String {
         let mut str_buf = String::new();
         for slice in self.slices.iter() {
             let slice = StyledContent::new(style, slice.clone());

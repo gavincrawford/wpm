@@ -31,7 +31,7 @@ const GAP: usize = 1;
 const MARGIN: usize = 3;
 
 /// Renders the menu.
-pub struct MenuRenderer {
+pub(crate) struct MenuRenderer {
     /// Selected menu option for each menu currently open.
     cursor: Vec<usize>,
     /// Active profile.
@@ -46,7 +46,7 @@ pub struct MenuRenderer {
 
 impl MenuRenderer {
     /// Renders the menu util exited or a test is started.
-    pub fn render(&mut self) -> Result<(), std::io::Error> {
+    pub(crate) fn render(&mut self) -> Result<(), std::io::Error> {
         // update stats in `profile`
         self.profile.borrow_mut().update_stats();
 

@@ -4,25 +4,25 @@ use std::time::Duration;
 
 /// Contains all information about a test result, including performance metrics.
 #[derive(Serialize, Deserialize)]
-pub struct TestResult {
+pub(crate) struct TestResult {
     /// Test length in words.
-    pub length: usize,
+    pub(crate) length: usize,
     /// Wordlist used.
-    pub wordlist: Wordlist,
+    pub(crate) wordlist: Wordlist,
     /// Mode used.
-    pub mode: TestMode,
+    pub(crate) mode: TestMode,
     /// Hit count.
-    pub hits: usize,
+    pub(crate) hits: usize,
     /// Miss count.
-    pub misses: usize,
+    pub(crate) misses: usize,
     /// Total time taken.
-    pub time: Duration,
+    pub(crate) time: Duration,
     /// Calculated WPMs, in (gross, net) format.
-    pub wpm: (f32, f32),
+    pub(crate) wpm: (f32, f32),
 }
 
 impl TestResult {
-    pub fn new(
+    pub(crate) fn new(
         length: usize,
         wordlist: Wordlist,
         mode: TestMode,

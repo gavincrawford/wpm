@@ -7,8 +7,8 @@ use std::fmt::Display;
 /// Stores all values that are configurable. The default variant of this struct is how WPM will
 /// work with completely default settings.
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Config {
-    pub map: IndexMap<String, ConfigValue>,
+pub(crate) struct Config {
+    pub(crate) map: IndexMap<String, ConfigValue>,
 }
 
 impl Default for Config {
@@ -69,7 +69,7 @@ impl Default for Config {
 
 impl Config {
     /// Get raw config values by key.
-    pub fn get(&self, key: impl AsRef<str>) -> &ConfigValue {
+    pub(crate) fn get(&self, key: impl AsRef<str>) -> &ConfigValue {
         let key = key.as_ref();
         self.map
             .get(key)
@@ -77,7 +77,7 @@ impl Config {
     }
 
     /// Get raw config values by key. Mutable.
-    pub fn get_mut(&mut self, key: impl AsRef<str>) -> &mut ConfigValue {
+    pub(crate) fn get_mut(&mut self, key: impl AsRef<str>) -> &mut ConfigValue {
         let key = key.as_ref();
         if let Some(value) = self.map.get_mut(key) {
             value
@@ -87,7 +87,7 @@ impl Config {
     }
 
     /// Get config values by key, select only. Will panic if called on other variants.
-    pub fn get_select(&self, key: impl Into<String>) -> &str {
+    pub(crate) fn get_select(&self, key: impl Into<String>) -> &str {
         let key = key.into();
         if let ConfigValue::Select { options, selected } = self.get(&key) {
             options
@@ -99,7 +99,7 @@ impl Config {
     }
 
     /// Get config values by key, boolean only. Will panic if called on other variants.
-    pub fn get_bool(&self, key: impl AsRef<str>) -> bool {
+    pub(crate) fn get_bool(&self, key: impl AsRef<str>) -> bool {
         let key = key.as_ref();
         if let ConfigValue::Bool(v) = self.get(key) {
             v.to_owned()
@@ -109,7 +109,7 @@ impl Config {
     }
 
     /// Get config values by key, integer only. Will panic if called on other variants.
-    pub fn get_int(&self, key: impl AsRef<str>) -> i32 {
+    pub(crate) fn get_int(&self, key: impl AsRef<str>) -> i32 {
         let key = key.as_ref();
         if let ConfigValue::Integer { v, max: _, min: _ } = self.get(key) {
             v.to_owned()
@@ -119,7 +119,7 @@ impl Config {
     }
 
     /// Get config values by key, RGB only. Will panic if called on other variants.
-    pub fn get_rgb(&self, key: impl AsRef<str>) -> Color {
+    pub(crate) fn get_rgb(&self, key: impl AsRef<str>) -> Color {
         let key = key.as_ref();
         if let ConfigValue::Rgb(serial_color) = self.get(key) {
             (*serial_color).into()
@@ -129,7 +129,7 @@ impl Config {
     }
 
     /// Set the given key to the given value.
-    pub fn set(&mut self, key: impl Into<String>, value: impl Into<ConfigValue>) {
+    pub(crate) fn set(&mut self, key: impl Into<String>, value: impl Into<ConfigValue>) {
         let key = key.into();
         let value = value.into();
         self.map
@@ -139,7 +139,7 @@ impl Config {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum ConfigValue {
+pub(crate) enum ConfigValue {
     Bool(bool),
     Integer {
         v: i32,
@@ -155,10 +155,10 @@ pub enum ConfigValue {
 
 /// A serializable stand-in for crossterm's `Color::Rgb`, used to persist RGB configuration values.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct SerialColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
+pub(crate) struct SerialColor {
+    pub(crate) r: u8,
+    pub(crate) g: u8,
+    pub(crate) b: u8,
 }
 
 impl From<SerialColor> for Color {

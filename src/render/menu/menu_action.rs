@@ -2,7 +2,7 @@ use super::*;
 
 /// Represents menu actions, like starting tests or viewing the profile.
 #[derive(Clone)]
-pub enum MenuAction {
+pub(crate) enum MenuAction {
     /// Executes a test with given parameters.
     Test {
         mode: TestMode,

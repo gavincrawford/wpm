@@ -3,19 +3,19 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct ProfileStatistics {
+pub(crate) struct ProfileStatistics {
     /// Number of tests.
-    pub total_tests: u64,
+    pub(crate) total_tests: u64,
     /// Average gross WPM.
-    pub average_gross_wpm: f32,
+    pub(crate) average_gross_wpm: f32,
     /// Average net WPM.
-    pub average_net_wpm: f32,
+    pub(crate) average_net_wpm: f32,
     /// Personal best gross WPM.
-    pub pb: f32,
+    pub(crate) pb: f32,
 }
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct Profile {
+pub(crate) struct Profile {
     /// Test history.
     history: Vec<TestResult>,
     /// Statistics.
@@ -26,33 +26,33 @@ pub struct Profile {
 
 impl Profile {
     /// Get an immutable snapshot of this profile's configuration.
-    pub fn get_config(&self) -> &Config {
+    pub(crate) fn get_config(&self) -> &Config {
         &self.config
     }
 
     /// Get an mutable snapshot of this profile's configuration.
-    pub fn get_config_mut(&mut self) -> &mut Config {
+    pub(crate) fn get_config_mut(&mut self) -> &mut Config {
         &mut self.config
     }
 
     /// Get an immutable snapshot of this profile's statistics.
-    pub fn get_stats(&self) -> &ProfileStatistics {
+    pub(crate) fn get_stats(&self) -> &ProfileStatistics {
         &self.stats
     }
 
     /// Get an immutable snapshot of this profile's history.
-    pub fn get_history(&self) -> &Vec<TestResult> {
+    pub(crate) fn get_history(&self) -> &Vec<TestResult> {
         &self.history
     }
 
     /// Get the last `n` test records, where `n` is specified by the current configuration.
-    pub fn get_recent(&self) -> Vec<&TestResult> {
+    pub(crate) fn get_recent(&self) -> Vec<&TestResult> {
         let n = self.config.get_int("recent test count") as usize;
         self.history.iter().rev().take(n).collect()
     }
 
     /// Update this profile's statistics.
-    pub fn update_stats(&mut self) {
+    pub(crate) fn update_stats(&mut self) {
         // total tests
         self.stats.total_tests = self.history.len() as u64;
 
@@ -80,12 +80,12 @@ impl Profile {
     }
 
     /// Records the given test result.
-    pub fn record(&mut self, test: TestResult) {
+    pub(crate) fn record(&mut self, test: TestResult) {
         self.history.push(test);
     }
 
     /// Save `&self` to the provided file path.
-    pub fn write_to(&self, file: impl Into<String>) -> Result<(), std::io::Error> {
+    pub(crate) fn write_to(&self, file: impl Into<String>) -> Result<(), std::io::Error> {
         let file = file.into();
         let file = File::create(file)?;
         serde_cbor::to_writer(file, &self).expect("Failed to write to CBOR writer.");
@@ -93,7 +93,7 @@ impl Profile {
     }
 
     /// Read the profile at the provided file path.
-    pub fn read_from(file: impl Into<String>) -> Result<Self, std::io::Error> {
+    pub(crate) fn read_from(file: impl Into<String>) -> Result<Self, std::io::Error> {
         let file = file.into();
         let file = File::open(file)?;
         Ok(serde_cbor::from_reader(file).expect("Failed to read from CBOR reader."))

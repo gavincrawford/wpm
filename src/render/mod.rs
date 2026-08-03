@@ -1,14 +1,14 @@
 /// Menu renderer.
-pub mod menu;
+pub(crate) mod menu;
 
 /// Profile statistics renderer.
-pub mod stats;
+pub(crate) mod stats;
 
 /// Test renderer.
-pub mod test;
+pub(crate) mod test;
 
 /// All wordlist content and related functions.
-pub mod wordlist;
+pub(crate) mod wordlist;
 
 /// Rendering utilities.
-pub mod util;
+pub(crate) mod util;

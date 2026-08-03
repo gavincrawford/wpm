@@ -3,7 +3,7 @@ use std::{fmt::Display, time::Duration};
 
 /// Represents which mode a test is in.
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum TestMode {
+pub(crate) enum TestMode {
     Words(usize),
     Time(Duration),
 }

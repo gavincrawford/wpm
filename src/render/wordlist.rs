@@ -8,18 +8,18 @@ macro_rules! wordlist {
     ($($variant:ident => $content:expr),* $(,)?) => {
         /// Wordlist specifier. Does not contain wordlist data.
         #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-        pub enum Wordlist {
+        pub(crate) enum Wordlist {
             $($variant),*
         }
 
         impl Wordlist {
             /// Returns an iterator over all enum variants
-            pub fn iter() -> impl Iterator<Item = Self> {
+            pub(crate) fn iter() -> impl Iterator<Item = Self> {
                 [$(Self::$variant),*].iter().copied()
             }
 
             /// Converts enum to wordlist content.
-            pub fn as_content(&self) -> String {
+            pub(crate) fn as_content(&self) -> String {
                 use super::wordlist::*;
                 let mut decoder = match self {
                     $(

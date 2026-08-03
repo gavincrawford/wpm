@@ -7,7 +7,7 @@ use super::wpm_gross;
 
 const WINDOW: Duration = Duration::from_secs(1);
 
-pub struct LiveWPM {
+pub(crate) struct LiveWPM {
     /// All moments in which a key was pressed that reside within the set time window.
     keypresses: VecDeque<Instant>,
     /// The instant in which the WPM was last queried.
@@ -17,7 +17,7 @@ pub struct LiveWPM {
 }
 
 impl LiveWPM {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             keypresses: VecDeque::with_capacity(20),
             last_instant: Instant::now(),
@@ -26,12 +26,12 @@ impl LiveWPM {
     }
 
     /// Registers a keypress at the current instant.
-    pub fn press(&mut self) {
+    pub(crate) fn press(&mut self) {
         self.keypresses.push_back(Instant::now());
     }
 
     /// Gives the WPM achieved over the set time window, and trims keypress entries that exceed it.
-    pub fn wpm(&mut self) -> f32 {
+    pub(crate) fn wpm(&mut self) -> f32 {
         // no keypresses = no wpm
         if self.keypresses.is_empty() {
             return 0.;

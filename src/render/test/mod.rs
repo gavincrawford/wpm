@@ -17,10 +17,10 @@ use crossterm::{
     style::{Print, Stylize},
     terminal::size,
 };
-pub use letter::*;
+pub(crate) use letter::*;
 use live_wpm::*;
-pub use test_mode::*;
-pub use test_result::*;
+pub(crate) use test_mode::*;
+pub(crate) use test_result::*;
 
 /// Base X padding for the UI.
 const PAD_X: u16 = 4;
@@ -29,7 +29,7 @@ const PAD_X: u16 = 4;
 const PAD_Y: u16 = 1;
 
 /// Renders a typing test with the given phrase.
-pub struct TestRenderer {
+pub(crate) struct TestRenderer {
     /// Tracks the live WPM.
     live_wpm: LiveWPM,
     /// Wordlist used.
@@ -53,7 +53,7 @@ pub struct TestRenderer {
 }
 
 impl TestRenderer {
-    pub fn new(wordlist: Wordlist, phrase: String, mode: TestMode) -> Self {
+    pub(crate) fn new(wordlist: Wordlist, phrase: String, mode: TestMode) -> Self {
         Self {
             live_wpm: LiveWPM::new(),
             wordlist,
@@ -95,7 +95,7 @@ impl TestRenderer {
 
     /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
     /// applicable, containing information about performance.
-    pub fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
+    pub(crate) fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
         // set up variables for the renderer
         self.line_limit = config.get_int("test line limit") as u16;
         self.apply_screen_limits()?;

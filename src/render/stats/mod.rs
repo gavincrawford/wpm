@@ -12,18 +12,18 @@ use rgb::RGB;
 use textplots::*;
 
 /// Renders profile statistics.
-pub struct StatsRenderer<'a> {
+pub(crate) struct StatsRenderer<'a> {
     /// Profile to view.
     profile: &'a Profile,
 }
 
 impl<'a> StatsRenderer<'a> {
-    pub fn new(profile: &'a Profile) -> Self {
+    pub(crate) fn new(profile: &'a Profile) -> Self {
         Self { profile }
     }
 
     /// Renders profile statistics.
-    pub fn render(&mut self) -> Result<(), std::io::Error> {
+    pub(crate) fn render(&mut self) -> Result<(), std::io::Error> {
         // graph wpm over time TODO this is jus a demo
         let mut stdout = stdout();
         let profile = self.profile;
