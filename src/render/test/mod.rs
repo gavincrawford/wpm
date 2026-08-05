@@ -251,7 +251,7 @@ impl TestRenderer {
         match key.code {
             Backspace => {
                 // prevent us from deleting into nowhere
-                if self.cursor <= 0 {
+                if self.cursor == 0 {
                     return;
                 }
                 self.cursor -= 1;
