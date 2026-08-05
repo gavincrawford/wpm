@@ -1,11 +1,11 @@
 use std::io::{stdout, Write};
 
 use super::util::*;
-use crate::profile::Profile;
+use crate::{config::SerialColor, profile::Profile};
 use crossterm::{
     cursor::{MoveTo, MoveToNextLine},
     queue,
-    style::{Print, Stylize},
+    style::{Color, Print, StyledContent, Stylize},
     terminal::{disable_raw_mode, enable_raw_mode, size},
 };
 use rgb::RGB;
@@ -31,6 +31,10 @@ impl<'a> StatsRenderer<'a> {
         let screen = size().unwrap();
         clear(&mut stdout);
 
+        // fetch colors from profile
+        let primary: SerialColor = profile.get_config().get_rgb("primary color");
+        let secondary: SerialColor = profile.get_config().get_rgb("secondary color");
+
         // first, make sure history isn't too short
         if history.is_empty() {
             return Err(std::io::Error::other("No history to display."));
@@ -40,7 +44,7 @@ impl<'a> StatsRenderer<'a> {
         queue!(
             stdout,
             MoveTo(0, 0),
-            Print("AVERAGE WPM"),
+            Print("AVERAGE WPM".with(Color::from(primary))),
             MoveToNextLine(1)
         )?;
         disable_raw_mode()?;
@@ -63,9 +67,9 @@ impl<'a> StatsRenderer<'a> {
                 }
             })),
             RGB {
-                r: 255,
-                g: 255,
-                b: 255,
+                r: primary.r,
+                g: primary.g,
+                b: primary.b,
             },
         )
         .linecolorplot(
@@ -81,9 +85,9 @@ impl<'a> StatsRenderer<'a> {
                 }
             })),
             RGB {
-                r: 145,
-                g: 145,
-                b: 145,
+                r: secondary.r,
+                g: secondary.g,
+                b: secondary.b,
             },
         )
         .display();
@@ -95,26 +99,39 @@ impl<'a> StatsRenderer<'a> {
             stdout,
             MoveToNextLine(1),
             Print(format!(
-                "|{:^32}| {}",
-                "total tests taken", stats.total_tests
+                "{}{}",
+                format!("|{:^32}| ", "total tests taken").with(secondary.into()),
+                stat(stats.total_tests as f64, 0, primary.into())
             )),
             MoveToNextLine(1),
             Print(format!(
-                "|{:^32}| {:.1}wpm",
-                "average gross", stats.average_gross_wpm
+                "{}{}{}",
+                format!("|{:^32}| ", "average gross").with(secondary.into()),
+                stat(stats.average_gross_wpm as f64, 1, primary.into()),
+                "wpm".with(secondary.into())
             )),
             MoveToNextLine(1),
             Print(format!(
-                "|{:^32}| {:.1}wpm",
-                "average net", stats.average_net_wpm
+                "{}{}{}",
+                format!("|{:^32}| ", "average net").with(secondary.into()),
+                stat(stats.average_net_wpm as f64, 1, primary.into()),
+                "wpm".with(secondary.into())
             )),
             MoveToNextLine(1),
-            Print(format!("|{:^32}| {:.1}wpm", "personal best", stats.pb)),
+            Print(format!(
+                "{}{}{}",
+                format!("|{:^32}| ", "personal best").with(secondary.into()),
+                stat(stats.pb as f64, 1, primary.into()),
+                "wpm".with(secondary.into())
+            )),
             MoveToNextLine(3),
         )?;
 
         // add message and flush
-        queue!(stdout, Print("Press enter to exit.".italic()))?;
+        queue!(
+            stdout,
+            Print("Press enter to exit.".italic().with(secondary.into()))
+        )?;
         stdout.flush()?;
 
         // wait for user input
@@ -133,4 +150,11 @@ impl<'a> StatsRenderer<'a> {
             .sum::<f32>()
             / size.0 as f32
     }
+}
+
+/// Formats `v` at `precision` decimals and applies `color` to it.
+/// This exists because the `format!` cannot apply precision to numbers that have had any color
+/// codes added to them, which would require lots of nested formatting to resolve.
+fn stat(v: f64, precision: usize, color: Color) -> StyledContent<String> {
+    format!("{v:.precision$}").with(color)
 }
