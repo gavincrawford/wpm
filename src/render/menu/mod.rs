@@ -309,8 +309,7 @@ impl MenuRenderer {
                     );
 
                     // execute test renderer
-                    let content = wordlist.as_content();
-                    let tokens: Vec<&str> = str_to_tokens(content.as_str());
+                    let tokens = wordlist.as_tokens();
                     let phrase = match mode {
                         TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
                         TestMode::Time(_) => tokens_to_phrase(100, &tokens),

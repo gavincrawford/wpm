@@ -18,8 +18,8 @@ macro_rules! wordlist {
                 [$(Self::$variant),*].iter().copied()
             }
 
-            /// Converts enum to wordlist content.
-            pub(crate) fn as_content(&self) -> String {
+            /// Retrieves the wordlist content associated with this variant as a list of tokens.
+            pub(crate) fn as_tokens(&self) -> Vec<String> {
                 use super::wordlist::*;
                 let mut decoder = match self {
                     $(
@@ -30,7 +30,7 @@ macro_rules! wordlist {
                 decoder
                     .read_to_string(&mut buf)
                     .expect("Failed to decompress requested wordlist.");
-                buf
+                buf.lines().map(str::to_string).collect()
             }
         }
 

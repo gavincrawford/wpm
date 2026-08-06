@@ -79,13 +79,8 @@ pub(crate) fn wpm_net(k: usize, e: usize, dur: Duration) -> f32 {
     (wpm_gross(k, dur) - (e as f32 / (dur.as_secs() as f32 / 60.))).clamp(0., 999.)
 }
 
-/// Split a string into a vector of its lines.
-pub(crate) fn str_to_tokens(src: &str) -> Vec<&str> {
-    src.lines().collect::<Vec<&str>>()
-}
-
 /// Select `n` number of tokens to create a random phrase.
-pub(crate) fn tokens_to_phrase(n: usize, tokens: &Vec<&str>) -> String {
+pub(crate) fn tokens_to_phrase(n: usize, tokens: &Vec<String>) -> String {
     let mut rng = rand::rng();
     let mut str = String::new();
     for _ in 0..n {
