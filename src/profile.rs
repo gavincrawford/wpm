@@ -1,4 +1,7 @@
-use crate::{config::Config, render::test::TestResult};
+use crate::{
+    config::{Config, SerialColor},
+    render::test::TestResult,
+};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 
@@ -22,6 +25,10 @@ pub(crate) struct Profile {
     stats: ProfileStatistics,
     /// Current configuration.
     config: Config,
+    /// Primary color. Cached for latency.
+    pub(crate) primary: Option<SerialColor>,
+    /// Secondary color. Cached for latency.
+    pub(crate) secondary: Option<SerialColor>,
 }
 
 impl Profile {
@@ -49,6 +56,12 @@ impl Profile {
     pub(crate) fn get_recent(&self) -> Vec<&TestResult> {
         let n = self.config.get_int("recent test count") as usize;
         self.history.iter().rev().take(n).collect()
+    }
+
+    /// Updates this profile's cached color values.
+    pub(crate) fn update_colorscheme(&mut self) {
+        self.primary = Some(self.get_config().get_rgb("primary color"));
+        self.secondary = Some(self.get_config().get_rgb("secondary color"));
     }
 
     /// Update this profile's statistics.

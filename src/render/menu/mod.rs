@@ -54,12 +54,16 @@ impl MenuRenderer {
         let mut stdout = stdout();
         let mut err: Result<(), std::io::Error> = Ok(());
         loop {
-            // fetch colors from profile
-            // PERF: this occurs every frame, which adds lag that could be optimized away by only
-            // fetching these when they change
-            let profile = self.profile.borrow();
-            let primary: Color = profile.get_config().get_rgb("primary color").into();
-            let secondary: Color = profile.get_config().get_rgb("secondary color").into();
+            // attempt to fetch colors from profile. if cached values aren't found, update them
+            // until they are `Some`
+            let mut profile = self.profile.borrow_mut();
+            let (Some(primary), Some(secondary)) = (profile.primary, profile.secondary) else {
+                profile.update_colorscheme();
+                continue;
+            };
+
+            // convert `SerialColor` -> `Color`
+            let (primary, secondary) = (primary.into(), secondary.into());
             drop(profile);
 
             // execute update callbacks

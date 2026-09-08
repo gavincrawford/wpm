@@ -221,9 +221,7 @@ impl MenuRenderer {
                                                     .txt_styled(
                                                         "B: ",
                                                         ContentStyle {
-                                                            foreground_color: Some(
-                                                                Color::DarkBlue,
-                                                            ),
+                                                            foreground_color: Some(Color::DarkBlue),
                                                             ..Default::default()
                                                         },
                                                     )
@@ -269,6 +267,9 @@ impl MenuRenderer {
                                             profile
                                                 .get_config_mut()
                                                 .set(&key, ConfigValue::Rgb(color));
+
+                                            // updated cached colors
+                                            profile.update_colorscheme();
                                         })),
                                     ))
                                 }
