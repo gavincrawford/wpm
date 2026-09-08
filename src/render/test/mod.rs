@@ -4,12 +4,13 @@ mod test_mode;
 mod test_result;
 
 use std::{
+    cell::RefMut,
     io::{stdout, Stdout, Write},
     time::{Duration, Instant},
 };
 
 use super::{util::*, wordlist::Wordlist};
-use crate::config::Config;
+use crate::profile::Profile;
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -95,7 +96,12 @@ impl TestRenderer {
 
     /// Renders a test until it is completed, or cancelled by the user. Returns a test result when
     /// applicable, containing information about performance.
-    pub(crate) fn render(&mut self, config: &Config) -> Result<Option<TestResult>, std::io::Error> {
+    pub(crate) fn render(
+        &mut self,
+        profile: RefMut<Profile>,
+    ) -> Result<Option<TestResult>, std::io::Error> {
+        let config = profile.get_config();
+
         // set up variables for the renderer
         self.line_limit = config.get_int("test line limit") as u16;
         self.apply_screen_limits()?;

@@ -318,9 +318,8 @@ impl MenuRenderer {
                         TestMode::Words(length) => tokens_to_phrase(*length, &tokens),
                         TestMode::Time(_) => tokens_to_phrase(100, &tokens),
                     };
-                    let mut profile = self.profile.borrow_mut();
                     let result = TestRenderer::new(wordlist, phrase, mode.to_owned())
-                        .render(profile.get_config())?;
+                        .render(self.profile.borrow_mut())?;
 
                     // if user abandoned test, we're done here
                     if result.is_none() {
@@ -329,6 +328,7 @@ impl MenuRenderer {
 
                     // temporarily show results before continuing
                     let result = result.unwrap(); // safety above
+                    let mut profile = self.profile.borrow_mut();
                     let mut stdout = stdout();
                     queue!(
                         // basic initial stats
