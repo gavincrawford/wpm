@@ -53,17 +53,17 @@ impl Default for Config {
             (
                 "secondary color".into(),
                 Rgb(SerialColor {
-                    r: 255,
-                    g: 255,
-                    b: 255,
+                    r: 180,
+                    g: 180,
+                    b: 180,
                 }),
             ),
             (
                 "text color".into(),
                 Rgb(SerialColor {
-                    r: 200,
-                    g: 200,
-                    b: 200,
+                    r: 255,
+                    g: 255,
+                    b: 255,
                 }),
             ),
         ]

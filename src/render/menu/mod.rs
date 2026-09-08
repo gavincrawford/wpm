@@ -57,13 +57,15 @@ impl MenuRenderer {
             // attempt to fetch colors from profile. if cached values aren't found, update them
             // until they are `Some`
             let mut profile = self.profile.borrow_mut();
-            let (Some(primary), Some(secondary)) = (profile.primary, profile.secondary) else {
+            let (Some(primary), Some(secondary), Some(text)) =
+                (profile.primary, profile.secondary, profile.text)
+            else {
                 profile.update_colorscheme();
                 continue;
             };
 
             // convert `SerialColor` -> `Color`
-            let (primary, secondary) = (primary.into(), secondary.into());
+            let (primary, secondary, text) = (primary.into(), secondary.into(), text.into());
             drop(profile);
 
             // execute update callbacks
@@ -160,7 +162,7 @@ impl MenuRenderer {
                                     stdout,
                                     MoveRight(MARGIN as u16 + last_max_x as u16),
                                     Print(label.with_style(ContentStyle {
-                                        foreground_color: Some(secondary),
+                                        foreground_color: Some(text),
                                         ..Default::default()
                                     })),
                                     MoveToNextLine(1)
@@ -172,7 +174,7 @@ impl MenuRenderer {
                                 stdout,
                                 MoveRight(MARGIN as u16 + last_max_x as u16),
                                 Print(label.with_style(ContentStyle {
-                                    foreground_color: Some(Color::DarkGrey),
+                                    foreground_color: Some(secondary),
                                     ..Default::default()
                                 })),
                                 MoveToNextLine(1)
