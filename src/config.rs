@@ -58,6 +58,14 @@ impl Default for Config {
                     b: 255,
                 }),
             ),
+            (
+                "text color".into(),
+                Rgb(SerialColor {
+                    r: 200,
+                    g: 200,
+                    b: 200,
+                }),
+            ),
         ]
         .iter()
         .for_each(|cfg_val: &(String, ConfigValue)| {

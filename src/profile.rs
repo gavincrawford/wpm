@@ -29,6 +29,8 @@ pub(crate) struct Profile {
     pub(crate) primary: Option<SerialColor>,
     /// Secondary color. Cached for latency.
     pub(crate) secondary: Option<SerialColor>,
+    /// Text color. Cached for latency.
+    pub(crate) text: Option<SerialColor>,
 }
 
 impl Profile {
@@ -62,6 +64,7 @@ impl Profile {
     pub(crate) fn update_colorscheme(&mut self) {
         self.primary = Some(self.get_config().get_rgb("primary color"));
         self.secondary = Some(self.get_config().get_rgb("secondary color"));
+        self.text = Some(self.get_config().get_rgb("text color"));
     }
 
     /// Update this profile's statistics.

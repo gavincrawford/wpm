@@ -10,7 +10,7 @@ use std::{
 };
 
 use super::{util::*, wordlist::Wordlist};
-use crate::profile::Profile;
+use crate::{config::SerialColor, profile::Profile};
 use crossterm::{
     cursor::{Hide, MoveDown, MoveRight, MoveTo, Show},
     event::{poll, read, Event, KeyCode, KeyEvent},
@@ -144,7 +144,8 @@ impl TestRenderer {
             )?;
 
             // render textbox
-            self.render_textbox(&mut stdout)?;
+            // TODO: no unwrap
+            self.render_textbox(&mut stdout, profile.text.unwrap(), profile.primary.unwrap())?;
 
             // wrap content in respect to screen limits
             queue!(stdout, move_to_wrap(self.cursor, self.text_limit.1), Show)?;
@@ -315,7 +316,12 @@ impl TestRenderer {
         self.cursor = self.letters.len();
     }
 
-    fn render_textbox(&self, stdout: &mut Stdout) -> Result<(), std::io::Error> {
+    fn render_textbox(
+        &self,
+        stdout: &mut Stdout,
+        text_color: SerialColor,
+        highlight_color: SerialColor,
+    ) -> Result<(), std::io::Error> {
         // render characters
         let mut letters_on_line = 0;
         let mut lines_on_screen = 0;
@@ -349,8 +355,16 @@ impl TestRenderer {
                 Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
                 Hit(c) => {
                     let char_age = self.cursor as i32 - idx as i32;
-                    let color = color_lerp((90, 255, 50), (30, 200, 30), char_age as f32 / 50.);
-                    queue!(stdout, Print(c.black().on(color).italic()))?
+                    let color = color_lerp(
+                        (highlight_color.r, highlight_color.g, highlight_color.b),
+                        (
+                            highlight_color.r / 2,
+                            highlight_color.g / 2,
+                            highlight_color.b / 2,
+                        ),
+                        char_age as f32 / 50.,
+                    );
+                    queue!(stdout, Print(c.with(text_color.into()).on(color).italic()))?
                 }
                 Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
             }
