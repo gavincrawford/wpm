@@ -32,8 +32,11 @@ impl<'a> StatsRenderer<'a> {
         clear(&mut stdout);
 
         // fetch colors from profile
-        let primary: SerialColor = profile.get_config().get_rgb("primary color");
-        let secondary: SerialColor = profile.get_config().get_rgb("secondary color");
+        let (Some(primary), Some(secondary), Some(text)) =
+            (profile.primary, profile.secondary, profile.text)
+        else {
+            panic!();
+        };
 
         // first, make sure history isn't too short
         if history.is_empty() {
@@ -100,29 +103,29 @@ impl<'a> StatsRenderer<'a> {
             MoveToNextLine(1),
             Print(format!(
                 "{}{}",
-                format!("|{:^32}| ", "total tests taken").with(secondary.into()),
+                format!("|{:^32}| ", "total tests taken").with(text.into()),
                 stat(stats.total_tests as f64, 0, primary.into())
             )),
             MoveToNextLine(1),
             Print(format!(
                 "{}{}{}",
-                format!("|{:^32}| ", "average gross").with(secondary.into()),
+                format!("|{:^32}| ", "average gross").with(text.into()),
                 stat(stats.average_gross_wpm as f64, 1, primary.into()),
-                "wpm".with(secondary.into())
+                "wpm".with(text.into())
             )),
             MoveToNextLine(1),
             Print(format!(
                 "{}{}{}",
-                format!("|{:^32}| ", "average net").with(secondary.into()),
+                format!("|{:^32}| ", "average net").with(text.into()),
                 stat(stats.average_net_wpm as f64, 1, primary.into()),
-                "wpm".with(secondary.into())
+                "wpm".with(text.into())
             )),
             MoveToNextLine(1),
             Print(format!(
                 "{}{}{}",
-                format!("|{:^32}| ", "personal best").with(secondary.into()),
+                format!("|{:^32}| ", "personal best").with(text.into()),
                 stat(stats.pb as f64, 1, primary.into()),
-                "wpm".with(secondary.into())
+                "wpm".with(text.into())
             )),
             MoveToNextLine(3),
         )?;
@@ -130,7 +133,7 @@ impl<'a> StatsRenderer<'a> {
         // add message and flush
         queue!(
             stdout,
-            Print("Press enter to exit.".italic().with(secondary.into()))
+            Print("Press enter to exit.".italic().with(text.into()))
         )?;
         stdout.flush()?;
 
