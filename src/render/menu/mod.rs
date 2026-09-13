@@ -73,7 +73,12 @@ impl MenuRenderer {
 
             // print label and profile notification
             clear(&mut stdout);
-            queue!(stdout, Hide, MoveTo(0, 0), Print("~ WPM ~".with(primary)),)?;
+            queue!(
+                stdout,
+                Hide,
+                MoveTo(MARGIN as u16 - 1, 0),
+                Print("~ WPM ~".with(primary)),
+            )?;
             if !self.save {
                 queue!(
                     stdout,
@@ -335,25 +340,29 @@ impl MenuRenderer {
                     queue!(
                         // basic initial stats
                         stdout,
+                        MoveToNextLine(1),
+                        MoveRight(2),
                         Print(format!("GROSS: {:.2} wpm", result.wpm.0)),
                         MoveToNextLine(1),
+                        MoveRight(2),
                         Print(format!(
                             "NET:   {:.2}wpm ({}X)",
                             result.wpm.1, result.misses,
                         )),
-                        MoveToNextLine(1),
                     )?;
                     if result.wpm.1 > profile.get_stats().pb {
                         queue!(
                             stdout,
-                            Print(format!("{} {}", "".yellow(), "new pb!".italic())),
                             MoveToNextLine(1),
+                            MoveRight(2),
+                            Print(format!("{} {}", "".yellow(), "new pb!".italic())),
                         )?;
                     }
                     queue!(
                         // continue message
                         stdout,
-                        MoveToNextLine(1),
+                        MoveToNextLine(2),
+                        MoveRight(2),
                         Print("Press enter to continue.".italic())
                     )?;
                     stdout.flush()?;
