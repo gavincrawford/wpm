@@ -19,6 +19,7 @@ impl Default for Config {
             ("show performance indicator".into(), Bool(true)),
             ("show live words per minute".into(), Bool(true)),
             ("show recent tests".into(), Bool(true)),
+            ("test progression fade".into(), Bool(true)),
             (
                 "recent test count".into(),
                 Integer {

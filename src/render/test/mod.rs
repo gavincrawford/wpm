@@ -145,7 +145,12 @@ impl TestRenderer {
 
             // render textbox
             // TODO: no unwrap
-            self.render_textbox(&mut stdout, profile.text.unwrap(), profile.primary.unwrap())?;
+            self.render_textbox(
+                &mut stdout,
+                profile.text.unwrap(),
+                profile.primary.unwrap(),
+                config.get_bool("test progression fade"),
+            )?;
 
             // wrap content in respect to screen limits
             queue!(stdout, move_to_wrap(self.cursor, self.text_limit.1), Show)?;
@@ -321,6 +326,7 @@ impl TestRenderer {
         stdout: &mut Stdout,
         text_color: SerialColor,
         highlight_color: SerialColor,
+        fade: bool,
     ) -> Result<(), std::io::Error> {
         // render characters
         let mut letters_on_line = 0;
@@ -354,17 +360,28 @@ impl TestRenderer {
             match *letter {
                 Char(c) => queue!(stdout, Print(c.dark_grey().on_grey()))?,
                 Hit(c) => {
-                    let char_age = self.cursor as i32 - idx as i32;
-                    let color = color_lerp(
-                        (highlight_color.r, highlight_color.g, highlight_color.b),
-                        (
-                            highlight_color.r / 2,
-                            highlight_color.g / 2,
-                            highlight_color.b / 2,
-                        ),
-                        char_age as f32 / 50.,
-                    );
-                    queue!(stdout, Print(c.with(text_color.into()).on(color).italic()))?
+                    if fade {
+                        let char_age = self.cursor as i32 - idx as i32;
+                        let color = color_lerp(
+                            (highlight_color.r, highlight_color.g, highlight_color.b),
+                            (
+                                highlight_color.r / 2,
+                                highlight_color.g / 2,
+                                highlight_color.b / 2,
+                            ),
+                            char_age as f32 / 50.,
+                        );
+                        queue!(stdout, Print(c.with(text_color.into()).on(color).italic()))?
+                    } else {
+                        queue!(
+                            stdout,
+                            Print(
+                                c.with(text_color.into())
+                                    .on(highlight_color.into())
+                                    .italic()
+                            )
+                        )?
+                    }
                 }
                 Miss(c) => queue!(stdout, Print(c.black().on_red()))?,
             }

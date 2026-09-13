@@ -541,13 +541,17 @@ mod tests {
             .unwrap();
         assert_eq!(renderer.cursor, vec![2, 0]);
 
+        // TODO: this test is fragile-- if config items are added or removed, the position of this
+        // configuration option might change. resolve by having a non-indexed way of navigating to
+        // certain setting lines
+
         // navigate down to "primary color" (settings item 6, per `Config::default`'s insertion
-        for _ in 0..6 {
+        for _ in 0..7 {
             renderer
                 .handle_key(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE))
                 .unwrap();
         }
-        assert_eq!(renderer.cursor, vec![2, 6]);
+        assert_eq!(renderer.cursor, vec![2, 7]);
 
         let before: SerialColor = renderer
             .profile
