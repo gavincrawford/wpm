@@ -1,7 +1,7 @@
 use std::io::{stdout, Write};
 
 use super::util::*;
-use crate::{config::SerialColor, profile::Profile};
+use crate::profile::Profile;
 use crossterm::{
     cursor::{MoveTo, MoveToNextLine},
     queue,
