@@ -6,7 +6,7 @@ use std::{
 use crossterm::{
     cursor::MoveTo,
     event::{poll, read, Event, KeyCode},
-    execute,
+    queue,
     style::Color,
     terminal::{Clear, ClearType},
 };
@@ -26,7 +26,7 @@ pub(crate) fn color_lerp(a: (u8, u8, u8), b: (u8, u8, u8), t: f32) -> Color {
 
 /// Clear the screen via the given `stdout` handle.
 pub(crate) fn clear(io: &mut Stdout) {
-    execute!(
+    queue!(
         io,
         MoveTo(0, 0),
         Clear(ClearType::All),
