@@ -99,22 +99,8 @@ impl MenuRenderer {
             queue!(stdout, MoveToNextLine(1))?;
 
             // set up variables for rendering
-            let menus = self.get_menus_from_cursor(); // get menus
-            let mut cursor = self.cursor.clone(); // clone cursor so that it renders nicely
-            *cursor.last_mut().unwrap() = *cursor // clamp cursor locally. will update `self`
-                .last()
-                .unwrap()
-                .clamp(
-                    &0,
-                    // prevent the cursor from leaving the subitems of the current menu
-                    &menus
-                        .last()
-                        .unwrap()
-                        .subitems()
-                        .unwrap()
-                        .len()
-                        .saturating_sub(1),
-                );
+            let cursor = self.clamp_cursor();
+            let menus = self.get_menus_from_cursor();
             let mut this_max_x: usize = 0; // the longest line of this render cycle
             let mut last_max_x: usize = 0; // the longest line of the last render cycle
 
@@ -243,6 +229,24 @@ impl MenuRenderer {
         clear(&mut stdout);
         execute!(stdout, Show)?;
         Ok(())
+    }
+
+    /// Clamps the cursor to the contents of the current menu.
+    fn clamp_cursor(&mut self) -> Vec<usize> {
+        let menus = self.get_menus_from_cursor(); // get menus
+        let mut cursor = self.cursor.clone();
+        *cursor.last_mut().unwrap() = *cursor.last().unwrap().clamp(
+            &0,
+            // prevent the cursor from leaving the subitems of the current menu
+            &menus
+                .last()
+                .unwrap()
+                .subitems()
+                .unwrap()
+                .len()
+                .saturating_sub(1),
+        );
+        cursor
     }
 
     /// Handles a keypress.
