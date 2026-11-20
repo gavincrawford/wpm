@@ -215,3 +215,33 @@ impl Display for ConfigValue {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn color(r: u8, g: u8, b: u8) -> SerialColor {
+        SerialColor { r, g, b }
+    }
+
+    #[test]
+    fn serial_color_add_basic() {
+        let mut c = color(10, 20, 30);
+        c.add(1, -2, 3);
+        assert_eq!(c, color(11, 18, 33));
+    }
+
+    #[test]
+    fn serial_color_add_clamps_upper() {
+        let mut c = color(255, 254, 0);
+        c.add(1, 1, 1);
+        assert_eq!(c, color(255, 255, 1));
+    }
+
+    #[test]
+    fn serial_color_add_clamps_lower() {
+        let mut c = color(0, 1, 255);
+        c.add(-1, -1, -1);
+        assert_eq!(c, color(0, 0, 254));
+    }
+}
