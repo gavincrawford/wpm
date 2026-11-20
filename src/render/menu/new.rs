@@ -241,27 +241,21 @@ impl MenuRenderer {
 
                                             // use left/right to iterate every channel of this
                                             // color up or down together, then save it back
-                                            let (d_r, d_g, d_b): (i32, i32, i32) =
-                                                match keystroke.code {
-                                                    KeyCode::Char('r') => (1, 0, 0),
-                                                    KeyCode::Char('R') => (-1, 0, 0),
-                                                    KeyCode::Char('g') => (0, 1, 0),
-                                                    KeyCode::Char('G') => (0, -1, 0),
-                                                    KeyCode::Char('b') => (0, 0, 1),
-                                                    KeyCode::Char('B') => (0, 0, -1),
-                                                    _ => return,
-                                                };
+                                            let (d_r, d_g, d_b): (i8, i8, i8) = match keystroke.code
+                                            {
+                                                KeyCode::Char('r') => (1, 0, 0),
+                                                KeyCode::Char('R') => (-1, 0, 0),
+                                                KeyCode::Char('g') => (0, 1, 0),
+                                                KeyCode::Char('G') => (0, -1, 0),
+                                                KeyCode::Char('b') => (0, 0, 1),
+                                                KeyCode::Char('B') => (0, 0, -1),
+                                                _ => return,
+                                            };
 
+                                            // add offsets to profile color
                                             let mut color: SerialColor =
                                                 profile.get_config().get_rgb(&key);
-                                            for (channel, delta) in [
-                                                (&mut color.r, d_r),
-                                                (&mut color.g, d_g),
-                                                (&mut color.b, d_b),
-                                            ] {
-                                                *channel =
-                                                    (*channel as i32 + delta).clamp(0, 255) as u8;
-                                            }
+                                            color.add(d_r, d_g, d_b);
 
                                             // reassign new color
                                             profile

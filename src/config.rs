@@ -180,6 +180,16 @@ impl From<SerialColor> for Color {
     }
 }
 
+impl SerialColor {
+    /// Adds the specified offset to the red, green, and blue channels respectively.
+    /// Clamps all values 0-255.
+    pub(crate) fn add(&mut self, d_r: i8, d_g: i8, d_b: i8) {
+        self.r = self.r.saturating_add_signed(d_r);
+        self.g = self.g.saturating_add_signed(d_g);
+        self.b = self.b.saturating_add_signed(d_b);
+    }
+}
+
 impl Display for ConfigValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ConfigValue::*;
